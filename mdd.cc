@@ -36,7 +36,7 @@ Williamsburg, VA 23185
 #   define MINDEBUG
 #endif
 
-#include <FDDL/mdd.h>
+#include "mdd.h"
 #include <stdio.h>
 
 int compactions;
@@ -107,7 +107,6 @@ fddl_forest::fddl_forest (int numlevels, int *maxvals)
   PruneCache = new cache *[K + 1];
   RestrictCache = new cache *[K + 1];
   MinCache = new cache *[K + 1];
-  EqualsCache = new cache *[K + 1];
   ComplementCache = new cache *[K + 1];
   BComplementCache = new cache *[K + 1];
   ValRestrictCache = new cache *[K + 1];
@@ -132,7 +131,6 @@ fddl_forest::fddl_forest (int numlevels, int *maxvals)
       RestrictCache[k] = new cache;
       MaxCache[k] = new cache;
       MinCache[k] = new cache;
-      EqualsCache[k] = new cache;
       ComplementCache[k] = new cache;
       BComplementCache[k] = new cache;
       ValRestrictCache[k] = new cache;
@@ -1013,7 +1011,6 @@ fddl_forest::FlushCaches (level k)
   ComplementCache[k]->Clear ();
   BComplementCache[k]->Clear ();
   MinCache[k]->Clear ();
-  EqualsCache[k]->Clear ();
   PrintCache[k]->Clear ();
 }
 
@@ -1591,80 +1588,6 @@ fddl_forest::PrintStates (level k, node_idx p, int *stateArray)
     }
 }
 
-void 
-fddl_forest::GetNodesAtLevel(level l, mdd_handle root, node_idx* nodeList){
-   int numNodes = 0;
-   for (level k = K; k>0; k--)
-      PrintCache[k]->Clear();
-   InternalGetNodesAtLevel(l, K, root.index, nodeList, numNodes);
-}
-
-void
-fddl_forest::InternalGetNodesAtLevel(level l, level k, node_idx p, node_idx* nodeList, int& numNodes){
-   int result;
-
-   if (p<=0){
-      return;
-   }
-
-   result = PrintCache[k]->Hit(p);
-   if (result >= 0){
-      return;
-   }
-
-   if (k==l){
-     PrintCache[k]->Add(p,1);
-     nodeList[numNodes] = p;
-     numNodes++;
-     return;
-   }
-
-   if (k>l){
-     node* nodeP;
-     nodeP=&FDDL_NODE(k,p);
-     for (int i=0;i<nodeP->size;i++){
-        InternalGetNodesAtLevel(l, k-1, FULL_ARC(k,nodeP,i), nodeList, numNodes); 
-     }
-     PrintCache[k]->Add(p,1);
-   }
-}
-
-int
-fddl_forest::NumNodesAtLevel(level l, mdd_handle root){
-   for (level k = K; k>0; k--)
-      PrintCache[k]->Clear();
-   return InternalNumNodesAtLevel(l, K, root.index);
-}
-
-int fddl_forest::InternalNumNodesAtLevel(level l, level k, node_idx p){
-   int result=0;
-
-   if (p<=0){
-      return 0;
-   }
-
-   result = PrintCache[k]->Hit(p);
-   if (result >= 0){
-      return 0;
-   }
-   result = 0;
-
-   if (k==l){
-     PrintCache[k]->Add(p,1);
-     return 1;
-   }
-
-   if (k>l){
-     node* nodeP;
-     nodeP=&FDDL_NODE(k,p);
-     for (int i=0;i<nodeP->size;i++){
-        result += InternalNumNodesAtLevel(l, k-1, FULL_ARC(k,nodeP,i)); 
-     }
-     PrintCache[k]->Add(p,1);
-     return result;
-   }
-}
-
 void
 fddl_forest::PruneMDD (mdd_handle p)
 {
@@ -1677,7 +1600,7 @@ for (node_idx i=0; i< last[K];i++)
          }
 */
   for (level k = K; k > 0; k--)
-    PruneCache[k]->Clear();
+    PruneCache[k]->Clear ();
   InternalPruneMDD (K, p.index, 1);
   for (level k = K; k > 0; k--)
     {

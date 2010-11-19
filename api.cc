@@ -26,9 +26,10 @@ College of William and Mary
 Williamsburg, VA 23185
 */
 
+#include <climits>
 #include <stdio.h>
 #include <assert.h>
-#include <FDDL/mdd.h>
+#include "mdd.h"
 
 #define MAX(a, b) (a>b ? a : b)
 #define MIN(a, b) (a<b ? a : b)
@@ -518,15 +519,14 @@ node_idx
 fddl_forest::InternalProjectOnto(level k, node_idx p, node_idx q)
 {
 
-	if (q == 0) 
-           return 0;
+	if (q == 0) return 0;
 
 	if (p == 0) {
-	   return q;
+		return q;
 	}
 
 	if (k == 0) 
-           return p;
+      return p;
 
 	node_idx r;
 
@@ -570,6 +570,10 @@ fddl_forest::InternalReplaceStrict(level k, node_idx p, node_idx q)
 	}
 
 	if (k == 0) {
+		if (p == 0)
+			return 0;
+		if (q == 0)
+			return p;
 		return q;
 	}
 
@@ -696,21 +700,6 @@ fddl_forest::Min(mdd_handle a, mdd_handle b, mdd_handle & result)
 	return SUCCESS;
 }
 
-int
-fddl_forest::Equals(mdd_handle a, mdd_handle b, mdd_handle & result)
-{
-	if (a.index < 0 || b.index < 0)
-		return MIN_FAILED;
-	node_idx newresult;
-
-	newresult = InternalEquals(K, a.index, b.index);
-	if (result.index != newresult) {
-		ReallocHandle(result);
-		Attach(result, newresult);
-	}
-	return SUCCESS;
-}
-
 int fddl_forest::Complement(mdd_handle a, mdd_handle & result)
 {
 	if (a.index < 0)
@@ -741,6 +730,7 @@ fddl_forest::BinaryComplement(mdd_handle a, mdd_handle & result)
 }
 
 //Simple Recursive Minimum of <k,p> and <k,q>
+
 node_idx 
 fddl_forest::InternalMin(level k, node_idx p, node_idx q)
 {
@@ -864,132 +854,6 @@ fddl_forest::InternalMin(level k, node_idx p, node_idx q)
 	MinCache[k]->Add(q, p, newresult);
 	MinCache[k]->Add(p, newresult, newresult);
 	MinCache[k]->Add(q, newresult, newresult);
-	return newresult;
-}
-
-node_idx 
-fddl_forest::InternalEquals(level k, node_idx p, node_idx q)
-{
-	//Easy Terminal Cases
-	if (p * q == 0)
- 	   return 0;
-
-	if (k == 0){
-	   return p == q ? 0 : p;
-	}
-
-	//Check for an entry in the Cache.
-	node_idx result;
-
-	result = EqualsCache[k]->Hit(p, q);
-	if (result >= 0) {
-		if (!(FDDL_NODE(k, result).flags & DELETED))
-			return result;
-		return CheckIn(k, result);
-	}
-
-	result = NewNode(k);
-	node   *nodeP = &FDDL_NODE(k, p);
-	node   *nodeQ = &FDDL_NODE(k, q);
-
-	int psize = nodeP->size;
-	int qsize = nodeQ->size;
-
-	//If neither node is sparse, do things the easy way.
-	if (!IS_SPARSE(nodeP) && !IS_SPARSE(nodeQ)) {
-		for (arc_idx i = 0; i < (psize > qsize ? psize : qsize); i++) {
-			node_idx u =
-				InternalEquals(k - 1, i < psize ? FULL_ARC(k, nodeP, i) : 0,
-								i < qsize ? FULL_ARC(k, nodeQ, i) : 0);
-
-			SetArc(k, result, i, u);
-		}
-	}
-	else if (IS_SPARSE(nodeP) && IS_SPARSE(nodeQ)) {
-		//If both nodes are sparse, do things the fast way!
-		//Scan from left to right.  If i is the smaller value, put it in the
-		//node.  If j is the smaller value, put it in the node.  If i==j, put
-		//the union of i and j in the node.  
-
-		for (arc_idx i = 0, j = 0; i < psize && j < qsize;) {
-			arc_idx pdx = SPARSE_INDEX(k, nodeP, i);
-			node_idx pval = SPARSE_ARC(k, nodeP, i);
-			arc_idx qdx = SPARSE_INDEX(k, nodeQ, j);
-			node_idx qval = SPARSE_ARC(k, nodeQ, j);
-
-			if (pdx < qdx) {
-				SetArc(k, result, pdx, 0);
-				i++;
-			}
-			else if (qdx < pdx) {
-				SetArc(k, result, qdx, 0);
-				j++;
-			}
-			else {
-				SetArc(k, result, pdx, InternalEquals(k - 1, pval, qval));
-				i++;
-				j++;
-			}
-		}
-	}
-	else {
-		if (IS_SPARSE(nodeP) && !IS_SPARSE(nodeQ)) {
-			int j = 0;
-
-			for (int i = 0; i < nodeP->size && j < nodeQ->size;) {
-				int idx = SPARSE_INDEX(k, nodeP, i);
-				int ival = SPARSE_ARC(k, nodeP, i);
-				int jval = FULL_ARC(k, nodeQ, j);
-
-				if (j < idx) {
-					SetArc(k, result, j, 0);
-					j++;
-				}
-				else if (idx < j) {
-					SetArc(k, result, idx, 0);
-					i++;
-				}
-				else {
-					SetArc(k, result, j, InternalEquals(k - 1, ival, jval));
-					i++;
-					j++;
-				}
-			}
-		}
-		else if (IS_SPARSE(nodeQ) && !IS_SPARSE(nodeP)) {
-			int i = 0;
-
-			for (int j = 0; j < nodeQ->size && i < nodeP->size;) {
-				int jdx = SPARSE_INDEX(k, nodeQ, j);
-				int jval = SPARSE_ARC(k, nodeQ, j);
-				int ival = FULL_ARC(k, nodeP, i);
-
-				if (i < jdx) {
-					SetArc(k, result, i, 0);
-					i++;
-				}
-				else if (jdx < i) {
-					SetArc(k, result, jdx, 0);
-					j++;
-				}
-				else {
-					SetArc(k, result, i, InternalEquals(k - 1, ival, jval));
-					i++;
-					j++;
-				}
-			}
-
-		}
-	}
-
-	node_idx newresult = CheckIn(k, result);
-
-//	if (k > 0 && newresult)
-//		FDDL_NODE(k, newresult).flags |= CHECKED_IN;
-	EqualsCache[k]->Add(p, q, newresult);
-	EqualsCache[k]->Add(q, p, newresult);
-	EqualsCache[k]->Add(p, newresult, newresult);
-	EqualsCache[k]->Add(q, newresult, newresult);
 	return newresult;
 }
 

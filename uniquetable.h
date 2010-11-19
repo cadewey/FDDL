@@ -25,8 +25,8 @@
 #ifndef FDDL_UNIQUE_TABLE_H
 #   define FDDL_UNIQUE_TABLE_H 1
 
-#   include <FDDL/mddtypes.h>
-#   include <FDDL/dynarray.h>
+#   include "mddtypes.h"
+#   include "dynarray.h"
 
 #   define TABLE_SIZE 1009
 class   uniquetable {

@@ -22,7 +22,7 @@
  * Robert Marmorstein Department of Computer Science College of William
  * and Mary Williamsburg, VA 23185 
  */
-#include <FDDL/caches.h>
+#include "caches.h"
 
 node_idx
 cache::Hit(node_idx p)

@@ -25,10 +25,10 @@
 
 #ifndef FDDL_CACHES_H
 #   define FDDL_CACHES_H 1
-#   include <FDDL/mddtypes.h>
+#   include "mddtypes.h"
 #   define INIT_SIZE 1009
 
-typedef class cache {
+class cache {
 	class   cache_node {
 	 public:
 		node_idx p;
@@ -73,7 +73,7 @@ typedef class cache {
 	void    Clear();
 };
 
-typedef class tuple_cache {
+class tuple_cache {
 	class   cache_node {
 	 public:
 		node_idx p;

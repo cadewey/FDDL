@@ -34,10 +34,12 @@ Williamsburg, VA 23185
 #   include <iostream>
 #   include <assert.h>
 
-#   include <FDDL/mddtypes.h>
-#   include <FDDL/caches.h>
-#   include <FDDL/dynarray.h>
-#   include <FDDL/uniquetable.h>
+#   include "mddtypes.h"
+#   include "caches.h"
+#   include "dynarray.h"
+#   include "uniquetable.h"
+
+using namespace std;
 
 #   define ARC_STAR -1		//For "FW mdds"
 
@@ -97,11 +99,11 @@ public:
   void Print ()
   {
     if (low == high)
-      printf ("%d", low);
+      cout << low;
     else if (low == 0 && high == 255)
-      printf ("*");
+      cout << "*";
     else
-      printf ("[%d-%d]", low, high);
+      cout << "[" << low << "-" << high << "]" << endl;
   }
 
 };
@@ -164,7 +166,7 @@ public:
 	      {
 		if (low[k] == 0 && high[k] == mV[k])
 		  {
-		    printf ("ALL ");
+		    cout << ("ALL ");
 		    continue;
 		  }
 		else
@@ -173,15 +175,15 @@ public:
 		      {
 			if (i == 0)
 			  {
-			    printf ("ICMP ");
+			    cout << ("ICMP ");
 			  }
 			else if (i == 1)
 			  {
-			    printf ("UDP ");
+			    cout << ("UDP ");
 			  }
 			else if (i == 2)
 			  {
-			    printf ("TCP ");
+			    cout << ("TCP ");
 			  }
 		      }
 		    continue;
@@ -192,13 +194,12 @@ public:
 		if (low[k] == 0 && high[k] == mV[k] && low[k - 1] == 0 &&
 		    high[k - 1] == mV[k - 1])
 		  {
-		    printf ("*");
+		    cout << ("*");
 		  }
 		else if (low[k] == high[k] && low[k - 1] == high[k - 1])
-		  printf ("%d", low[k] * 256 + low[k - 1]);
+		  cout << low[k]*256+low[k-1];
 		else
-		  printf ("%d-%d", low[k] * 256 + low[k - 1],
-			  high[k] * 256 + high[k - 1]);
+		  cout << low[k] * 256 + low[k-1] << "-" << high[k]*256 + high[k-1];
 		continue;
 	      }
 	    if (k == 12 || k == 10)
@@ -211,19 +212,19 @@ public:
 	      ch = '.';
 	    if (low[k] == high[k])
 	      {
-		printf ("[%d]%c", high[k], ch);
+		cout << "[" << high[k] << "]" << ch << endl;
 	      }
 	    else if (low[k] == 0 && high[k] == mV[k])
 	      {
-		printf ("*%c", ch);
+		cout << ch;
 	      }
 	    else
 	      {
-		printf ("[%d-%d]%c", low[k], high[k], ch);
+		cout << "[" << low[k] << "-" << high[k] << "]" << ch;
 	      }
 	  }
       }
-    printf (" ");
+    cout << " ";
   }
 };
 
@@ -239,6 +240,7 @@ protected:
   int K;			//Number of Non-terminal Levels
   int *tail;			//Array [1..K] which records number of arcs per level.
   node_idx *last;		//Array [1..K] which records number of nodes per level.
+  int *maxVals;			//Array [0..K] of maximum values for each level.
 
   int CompactCounter;
 
@@ -247,7 +249,6 @@ protected:
   cache **RestrictCache;
   cache **MaxCache;
   cache **MinCache;
-  cache **EqualsCache;
   cache **ComplementCache;
   cache **BComplementCache;
   cache **LessThanCache;	//Cache for "Less Than" operation
@@ -262,11 +263,9 @@ protected:
   cache **PrintCache;
 
   int Value (level k, node_idx p, int *tup);
-  void InternalGetNodesAtLevel(level l, level k, node_idx p, node_idx* nodeList, int& numNodes);
-  int InternalNumNodesAtLevel(level l, level k, node_idx p);
 
 public:
-  int *maxVals;			//Array [0..K] of maximum values for each level.
+
   void ReallocHandle (mdd_handle & ref);
 
   void Attach (mdd_handle & ref, node_idx i)
@@ -323,9 +322,6 @@ public:
 	if (MinCache[k])
 	  delete MinCache[k];
 
-	if (EqualsCache[k])
-	  delete EqualsCache[k];
-
 	if (ComplementCache[k])
 	  delete ComplementCache[k];
 
@@ -371,7 +367,6 @@ public:
     delete[]RestrictCache;
     delete[]MaxCache;
     delete[]MinCache;
-    delete[]EqualsCache;
     delete[]ComplementCache;
     delete[]BComplementCache;
     delete[]ValRestrictCache;
@@ -409,7 +404,6 @@ public:
 
   int Max (mdd_handle p, mdd_handle q, mdd_handle & result);
   int Min (mdd_handle p, mdd_handle q, mdd_handle & result);
-  int Equals (mdd_handle p, mdd_handle q, mdd_handle & result);
   int Complement (mdd_handle p, mdd_handle & result);
   int BinaryComplement (mdd_handle p, mdd_handle & result);
   int LessThan (mdd_handle p, int value, mdd_handle & result);
@@ -459,9 +453,6 @@ public:
   int UnpackNode (level k, arc_idx p, int *&fullarray);
   void DeleteDownstream (level k, node_idx p);
 
-  void GetNodesAtLevel(level l, mdd_handle root, node_idx* nodeList);
-  int NumNodesAtLevel(level l, mdd_handle root);
-
   //Switch levels k1 and k2 in the MDD (maybe save space or time?)
   typedef struct state_triple
   {
@@ -489,7 +480,6 @@ public:
   node_idx InternalRestrict (level k, node_idx p, node_idx q);
   node_idx InternalMax (level k, node_idx p, node_idx q);
   node_idx InternalMin (level k, node_idx p, node_idx q);
-  node_idx InternalEquals (level k, node_idx p, node_idx q);
   node_idx InternalComplement (level k, node_idx p);
   node_idx InternalBComplement (level k, node_idx p);
   node_idx InternalLessThan (level k, node_idx p, int value);
