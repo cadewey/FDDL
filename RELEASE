@@ -1,0 +1,71 @@
+Thank you for downloading version 1.2 of ITVal, an iptables configuration
+verification and analysis tool.  
+
+Version 1.2 features a new build system, transitioning for a configure system
+to CMake.
+
+IMPORTANT NOTE: Version 1.2 breaks compatibility with pre-release versions 0.7
+and lower of the tool.  Query files created for versions 0.7 and lower may not
+work with this version or may generate unexpected results.  See below for more
+details.
+
+What's new in 1.2?
+------------------
+Version 1.2 introudces a new build system using CMake to increase the speed
+of compilation and to make installation easier. 
+
+Version 1.2 also seperated the FDDL library from ITVal and made it operate
+independently, and now must be downloaded separately. The FDDL library also
+utilizes CMake for installation.
+The FDDL library can be found at:
+
+	https://github.com/atomopawn/FDDL
+
+
+
+What is not provided in release 1.2?
+------------------------------------
+1.  Support for non-iptables filters.
+
+ITVal does not filters for platforms other than Linux. Because
+maintaining parsers for other languages is costly and time-consuming, it
+is unlikely that I will be adding support for other platforms.  However,
+I do intend to create an API for writing language modules, so if you
+want to see your platform supported, you will have the tools to add
+support for that language.  I am working with Alain Mayer at redseal.org
+to generate conversion tools from redseal's excellent security tool to
+work with ITVal an vice-versa.  You can also obtain tools for converting
+from ipfw or ipchains to iptables at http://www.stearns.org.
+
+2.  Support for application level filtering.
+
+ITVal is designed to work only with packet-filters.  While, in theory,
+ITVal could be extended to other uses, such as e-mail filtering, to do
+so would require a significant overhaul of the internal design.
+
+3.  A fancy graphical front-end.
+
+Work on the GUI continues slowly as we decide what to provide through the
+interface and refactor the code to make it more amenable to graphical
+manipulation.
+
+4.  Support for dynamic firewalls
+
+ITVal can process a ``snapshot in time'' of a firewall, but has no query
+capabilities for analyzing the evolution of firewalls over time.
+
+What is coming in future versions of ITVal?
+-------------------------------------------
+1.  Guided repair
+ITVal will generate a list of suggested changes to the rule set that satisfy
+all the assertions in a query file.
+
+2.  Translations
+Aleksandr Shubnik has volunteered to provide Russian translations for ITVal.  
+Hopefully, others will join the team to provide translations in other languages.
+
+3.  A Graphical Front-End
+Yes, really!  I am leaning now toward a QT-based interface that will allow the
+user to manipulate queries in a text-editing environment and then check them in
+real time against the rule set.  The old, klugy, python/TK attempt was not
+very portable and introduced problems with paths.

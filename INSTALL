@@ -1,0 +1,22 @@
+Installation Instructions
+*************************
+
+The following six steps are used to install the FDDL library necessary for
+the ITVal program to run.
+
+Step 1. Create a build directory inside the FDDL directory by typing 
+	"mkdir build".
+Step 2. Enter the build directory by typing "cd build".
+Step 3. Type "cmake ..".
+Step 4. Type "make".
+Step 5. Become the superuser.
+Step 6. Run "make install".
+
+By default, the "FDDL" library files will be installed to /usr/local/lib.
+Make sure your environment settings (i.e. your PATH variable reflect these 
+locations.
+
+To change where the files are installed, this can be 
+done during step 3 using the command:
+
+	cmake -DCMAKE_INSTALL_PREFIX=location_for_installation ..
