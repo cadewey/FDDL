@@ -1,0 +1,2 @@
+ADD_EXECUTABLE(test_dynarray test_dynarray.cpp)
+TARGET_LINK_LIBRARIES(test_dynarray FDDL)

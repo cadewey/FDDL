@@ -1,2 +1,5 @@
 cmake_minimum_required (VERSION 2.6)
 add_subdirectory(src)
+add_subdirectory(tests)
+ENABLE_TESTING()
+ADD_TEST(test_dynarray tests/test_dynarray)
