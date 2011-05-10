@@ -86,7 +86,19 @@ void Cache::clear()
     }
 }
 
-node_idx TupleCache::hit(node_idx p, node_idx * vals, int numvals)
+TupleCache::TupleCache() : m_size(INIT_SIZE) {
+        m_list = new CacheNode*[INIT_SIZE];
+        for (unsigned int i = 0; i < m_size; i++) {
+            m_list[i] = NULL;
+        }
+}
+
+TupleCache::~TupleCache() {
+        clear();
+        delete[] m_list;
+}
+
+node_idx TupleCache::hit(const node_idx p, const node_idx * vals, const int numvals) const
 {
     unsigned int idx;
     CacheNode *cur;
@@ -114,7 +126,7 @@ node_idx TupleCache::hit(node_idx p, node_idx * vals, int numvals)
     return -1;
 }
 
-node_idx TupleCache::hit(node_idx * vals, int numvals)
+node_idx TupleCache::hit(const node_idx * vals, const int numvals) const
 {
     unsigned int idx;
     CacheNode *cur;
@@ -142,7 +154,7 @@ node_idx TupleCache::hit(node_idx * vals, int numvals)
     return -1;
 }
 
-void TupleCache::add(node_idx r, node_idx p, node_idx * vals, int numvals)
+void TupleCache::add(const node_idx r, const node_idx p, const node_idx * const vals, const int numvals)
 {
     unsigned int idx;
     CacheNode *newNode;
@@ -166,7 +178,7 @@ void TupleCache::add(node_idx r, node_idx p, node_idx * vals, int numvals)
     m_list[idx] = newNode;
 }
 
-void TupleCache::add(node_idx r, node_idx * vals, int numvals)
+void TupleCache::add(const node_idx r, const node_idx * const vals, const int numvals)
 {
     unsigned int idx;
     CacheNode *newNode;

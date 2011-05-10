@@ -54,23 +54,14 @@ class TupleCache {
     unsigned int m_size;
 
   public:
-    TupleCache() {
-	m_list = new CacheNode *[INIT_SIZE];
-	m_size = INIT_SIZE;
-	for (unsigned int i = 0; i < m_size; i++) {
-	    m_list[i] = NULL;
-	}
-    }
+    TupleCache();
+    
+    ~TupleCache(); 
 
-    ~TupleCache() {
-	clear();
-	delete[] m_list;
-    }
-
-    node_idx hit(node_idx * vals, int numvals);
-    node_idx hit(node_idx p, node_idx * vals, int numvals);
-    void add(node_idx r, node_idx p, node_idx * vals, int numvals);
-    void add(node_idx r, node_idx * vals, int numvals);
+    node_idx hit(const node_idx * const vals, const int numvals) const;
+    node_idx hit(const node_idx p, const node_idx * const vals, const int numvals) const;
+    void add(const node_idx r, const node_idx p, const node_idx * const vals, const int numvals);
+    void add(const node_idx r, const node_idx * const vals, const int numvals);
     void clear();
 };
 #endif //__CACHES_H
