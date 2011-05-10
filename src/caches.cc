@@ -9,7 +9,7 @@
 
 #include "caches.h"
 
-node_idx cache::hit(node_idx p, node_idx q, node_idx s)
+node_idx Cache::hit(node_idx p, node_idx q, node_idx s)
 {
     int idx;
     cache_node *cur;
@@ -35,7 +35,7 @@ node_idx cache::hit(node_idx p, node_idx q, node_idx s)
     return -1;
 }
 
-void cache::add(node_idx r, node_idx p, node_idx q, node_idx s)
+void Cache::add(node_idx r, node_idx p, node_idx q, node_idx s)
 {
     int idx;
     
@@ -62,7 +62,7 @@ void cache::add(node_idx r, node_idx p, node_idx q, node_idx s)
     m_list[idx] = newNode;
 }
 
-void cache::clear()
+void Cache::clear()
 {
     cache_node *prev;
 
@@ -75,7 +75,7 @@ void cache::clear()
     }
 }
 
-node_idx tuple_cache::hit(node_idx p, node_idx * vals, int numvals)
+node_idx TupleCache::hit(node_idx p, node_idx * vals, int numvals)
 {
     int idx;
     cache_node *cur;
@@ -103,7 +103,7 @@ node_idx tuple_cache::hit(node_idx p, node_idx * vals, int numvals)
     return -1;
 }
 
-node_idx tuple_cache::hit(node_idx * vals, int numvals)
+node_idx TupleCache::hit(node_idx * vals, int numvals)
 {
     int idx;
     cache_node *cur;
@@ -131,7 +131,7 @@ node_idx tuple_cache::hit(node_idx * vals, int numvals)
     return -1;
 }
 
-void tuple_cache::add(node_idx r, node_idx p, node_idx * vals, int numvals)
+void TupleCache::add(node_idx r, node_idx p, node_idx * vals, int numvals)
 {
     int idx;
     cache_node *newNode;
@@ -155,7 +155,7 @@ void tuple_cache::add(node_idx r, node_idx p, node_idx * vals, int numvals)
     m_list[idx] = newNode;
 }
 
-void tuple_cache::add(node_idx r, node_idx * vals, int numvals)
+void TupleCache::add(node_idx r, node_idx * vals, int numvals)
 {
     int idx;
     cache_node *newNode;
@@ -178,7 +178,7 @@ void tuple_cache::add(node_idx r, node_idx * vals, int numvals)
     m_list[idx] = newNode;
 }
 
-void tuple_cache::clear()
+void TupleCache::clear()
 {
     cache_node *prev;
 

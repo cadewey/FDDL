@@ -7,75 +7,45 @@
  * information.
  */
 
+//#define FDDL_DEBUG
 //#define BRIEF_DEBUG
 
-#ifndef FDDL_MDD_H
-#   define FDDL_MDD_H 1
+#ifndef __MDD_H
+#define __MDD_H
 
-#   include <iostream>
-#   include <assert.h>
+#include <iostream>
+#include <assert.h>
 
-#   include "mddtypes.h"
-#   include "caches.h"
-#   include "dynarray.h"
-#   include "uniquetable.h"
+#include "mddtypes.h"
+#include "caches.h"
+#include "dynarray.h"
+#include "uniquetable.h"
 
 using namespace std;
 
-#   define ARC_STAR -1		//For "FW mdds"
-
-//#define FDDL_DEBUG
-
-#   define O_LAZY 0
-#   define O_STRICT 2
-
-//Node Flag Values
-
-#   define SHARED 1
-#   define SPARSE 2
-#   define DELETED 4
-#   define CHECKED_IN 8
-#   define SATURATED 16
-
-//Useful Macros for accessing nodes and arc information
-
-#   define FDDL_NODE(k,p) (*((*nodes[(k)])[(p)]))
-#   define FULL_ARC(k,node,i) (*((*arcs[(k)])[(node)->down+(i)]))
-#   define FULL_LABEL(k,node,i) (*((*labels[(k)])[(node)->down+(i)]))
-
-#   define SPARSE_INDEX(k,node,i) (*((*arcs[(k)])[((node)->down+(2*(i)))]))
-#   define SPARSE_ARC(k,node,i) (*((*arcs[(k)])[((node)->down+(2*(i)+1))]))
-#   define LABEL_INDEX(k,node,i) (*((*labels[(k)])[((node)->down+(2*(i)))]))
-#   define SPARSE_LABEL(k,node,i) (*((*labels[(k)])[((node)->down+(2*(i)+1))]))
-
-#   define IS_SPARSE(node) ((node->flags & SPARSE))
-#   define IS_DELETED(node) ((node->flags & DELETED))
-
-#   define FDDL_ARC(k,node, i) (IS_SPARSE(node) ? SPARSE_ARC(k,node,i) : FULL_ARC(k,node,i))
-
-enum mdd_op_return_val
-    { SUCCESS =
-0, TUPLE_OUT_OF_BOUNDS, INVALID_MDD, MAX_FAILED, MIN_FAILED,
-    COMPLEMENT_FAILED, INVALID_LEVEL
-};
+enum garbage_algorithm {O_LAZY=0, O_STRICT=2}; 
+enum flags {SHARED=1,SPARSE=2,DELETED=4,CHECKED_IN=8,SATURATED=16};
+enum mdd_op_return_val { SUCCESS = 0, TUPLE_OUT_OF_BOUNDS, INVALID_MDD, MAX_FAILED, MIN_FAILED, COMPLEMENT_FAILED, INVALID_LEVEL };
 
 class fddl_forest;
+extern fddl_forest *thisForest;
 
-class label {
-  public:
+
+struct label {
     int rule_num;
     label *next;
 };
 
-class print_range {
-  public:
+struct print_range {
     int low;
     int high;
 
      print_range(int l, int h) {
 	low = l;
 	high = h;
-    } void Print() {
+    } 
+     
+    void Print() {
 	if (low == high)
 	    cout << low;
 	else if (low == 0 && high == 255)
@@ -85,8 +55,6 @@ class print_range {
     }
 
 };
-
-extern fddl_forest *thisForest;
 
 static unsigned int ExternalHashNode(level k, node_idx p);
 static int ExternalCompare(level k, node_idx p, node_idx q);
@@ -106,6 +74,7 @@ class node {
 	size = 0;
 	in = 0;
 }};
+
 
 class print_node {
     int K;
@@ -196,23 +165,24 @@ class fddl_forest {
 
     int CompactCounter;
 
-    cache **ProjectCache;	//Caches for embedded operations 
-    cache **PruneCache;		//Caches for embedded operations 
-    cache **RestrictCache;
-    cache **MaxCache;
-    cache **MinCache;
-    cache **ComplementCache;
-    cache **BComplementCache;
-    cache **LessThanCache;	//Cache for "Less Than" operation
-    tuple_cache **ApplyCache;
-    cache **ValRestrictCache;	//Cache for "ValRestrict" operation
-    cache **CombineCache;
-    cache **ReplaceCache;
-    cache **ProjectOntoCache;
-    cache **ReplaceStrictCache;
-    tuple_cache **SelectCache;
-    cache **ShiftCache;
-    cache **PrintCache;
+    //Caches for embedded operations 
+    Cache **ProjectCache;	
+    Cache **PruneCache;		
+    Cache **RestrictCache;
+    Cache **MaxCache;
+    Cache **MinCache;
+    Cache **ComplementCache;
+    Cache **BComplementCache;
+    Cache **LessThanCache;	
+    Cache **ValRestrictCache;	
+    Cache **CombineCache;
+    Cache **ReplaceCache;
+    Cache **ProjectOntoCache;
+    Cache **ReplaceStrictCache;
+    Cache **ShiftCache;
+    Cache **PrintCache;
+    TupleCache **ApplyCache;
+    TupleCache **SelectCache;
 
     int Value(level k, node_idx p, int *tup);
 
@@ -450,6 +420,55 @@ class fddl_forest {
     void SaveMDD(char *filename);
     void LoadMDD(char *filename);
 
+    inline node& FDDL_NODE(level k, node_idx p) const
+    {
+	    return *((*nodes[k])[p]);
+    }
+
+    inline node_idx& FULL_ARC(level k, node* n, arc_idx i) const
+    {
+	return *((*arcs[k])[n->down + i]);
+    }
+
+    inline label* FULL_LABEL(level k, node* n, arc_idx i) const
+    {
+	return *((*labels[k])[n->down + i]);
+    } 
+
+    inline arc_idx& SPARSE_INDEX(level k, node* n, arc_idx i) const
+    {
+	return *((*arcs[k])[n->down + 2 * i]);
+    }
+    
+    inline node_idx& SPARSE_ARC(level k, node* n, arc_idx i) const
+    {
+	return *((*arcs[k])[n->down + 2 * i + 1]);
+    }
+
+    inline label* LABEL_INDEX(level k, node* n, arc_idx i) const
+    {
+	return *((*labels[k])[n->down + 2 * i]);
+    }
+
+    inline label* SPARSE_LABEL(level k, node* n, arc_idx i) const
+    {
+	return *((*labels[k])[n->down + 2 * i + 1]);
+    }
+
+   inline bool IS_SPARSE(const node* const n) const
+   {
+	return (n->flags & SPARSE) > 0;
+   }
+
+   inline bool IS_DELETED(const node* const n) const
+   {
+	return (n->flags & DELETED) > 0;
+   }
+
+   inline node_idx& FDDL_ARC(level k, node* n, arc_idx i) const
+   {
+	return IS_SPARSE(n) ? SPARSE_ARC(k,n,i) : FULL_ARC(k,n,i);
+   }
 };
 
-#endif
+#endif //__MDD_H

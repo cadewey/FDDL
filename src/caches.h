@@ -13,7 +13,7 @@
 #include "mddtypes.h"
 const unsigned int INIT_SIZE=1009;
 
-class cache {
+class Cache {
 
    private:
     struct cache_node {
@@ -27,14 +27,14 @@ class cache {
     };
 
   public:
-    cache() {
+    Cache() {
 	m_list = new cache_node *[INIT_SIZE];
 	m_size = INIT_SIZE;
 	for (unsigned int i = 0; i < m_size; i++)
 	    m_list[i] = NULL;
     }
 
-    ~cache() {
+    ~Cache() {
 	    clear();
 	    delete[] m_list;
     }
@@ -49,7 +49,7 @@ class cache {
 
 };
 
-class tuple_cache {
+class TupleCache {
     struct cache_node {
 	cache_node *m_next;
 	node_idx p;
@@ -63,7 +63,7 @@ class tuple_cache {
     int m_size;
 
   public:
-    tuple_cache() {
+    TupleCache() {
 	m_list = new cache_node *[INIT_SIZE];
 	m_size = INIT_SIZE;
 	for (int i = 0; i < m_size; i++) {
@@ -71,7 +71,7 @@ class tuple_cache {
 	}
     }
 
-    ~tuple_cache() {
+    ~TupleCache() {
 	clear();
 	delete[] m_list;
     }
