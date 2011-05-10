@@ -10,77 +10,77 @@
 #ifndef __DYNARRAY_H
 #define __DYNARRAY_H
 
-const int DEFAULT_SCALE = 2;
-const int DEFAULT_SIZE = 256;
+#include <cstdlib>
+#include <assert.h>
 
-template < typename T > class Dynarray {
+using namespace std;
+
+const int DEFAULT_SIZE = 256;
+const int DEFAULT_SCALE = 2;
+
+template < typename T > class DynArray {
   private:
     T ** m_data;
-    int m_size;
-    T *m_defValue;
-    int m_scale;
+    unsigned int m_size;
+    unsigned int m_scale;
+    T *m_default_value;
 
   public:
-    Dynarray(T const &def) {
+    DynArray() : m_size(DEFAULT_SIZE), m_scale(DEFAULT_SCALE), m_default_value(NULL) 
+    {
 	m_data = new T *[DEFAULT_SIZE];
-	m_size = DEFAULT_SIZE;
-	m_defValue = new T;
-	*m_defValue = def;
-	for (int i = 0; i < m_size; i++) {
+	for (unsigned int i = 0; i < m_size; i++){
+	    m_data[i] = new T;
+	}
+    }
+
+    DynArray(T const &def) : m_size(DEFAULT_SIZE), m_scale(DEFAULT_SCALE) 
+    {
+	m_data = new T *[DEFAULT_SIZE];
+	m_default_value = new T;
+
+	for (unsigned int i = 0; i < m_size; i++) {
 	    m_data[i] = new T;
 	    *(m_data[i]) = def;
 	}
-	m_scale = DEFAULT_SCALE;
     }
 
-    Dynarray() {
-	m_scale = DEFAULT_SCALE;
-	m_data = new T *[DEFAULT_SIZE];
-	m_size = DEFAULT_SIZE;
-	for (int i = 0; i < m_size; i++)
-	    m_data[i] = new T;
-	m_defValue = NULL;
-    }
-
-    ~Dynarray() {
-	for (int i = 0; i < m_size; i++) {
+    ~DynArray() {
+	for (unsigned int i = 0; i < m_size; i++) {
 	    if (m_data[i])
 		delete m_data[i];
-	    m_data[i] = NULL;
 	}
-	delete[]m_data;
-	m_data = NULL;
-	m_size = -1;
-	if (m_defValue)
-	    delete m_defValue;
-	m_defValue = NULL;
+	delete[] m_data;
+	if (m_default_value)
+	    delete m_default_value;
+	m_default_value = NULL;
     }
 
-    T *&operator[] (int index) {
-	while (index >= m_size)
+    T *&operator[] (const unsigned int index) {
+	while (index >= m_size){
 	    extend();
+	}
 	return m_data[index];
     }
-
+  
   private:
     void extend() {
-	T **newData;
-	newData = new T *[m_size * m_scale];
+	T **newData = new T *[m_size * m_scale];
 	assert(newData);
-	for (int i = 0; i < m_size; i++) {
+	for (unsigned int i = 0; i < m_size; i++) {
 	    newData[i] = m_data[i];	//Pointer assignment, not value assignment!
 	}
-	delete[]m_data;
+	delete[] m_data;
 	for (int i = m_size; i < m_size * m_scale; i++) {
 	    newData[i] = new T;
-	    if (m_defValue)
-		(*newData[i]) = *m_defValue;
+	    if (m_default_value)
+		(*newData[i]) = *m_default_value;
 	}
 	m_data = newData;
 	m_size *= m_scale;
-	newData = NULL;
+
+	//Since we needed to extend, perhaps the scale is too small.  Make it bigger.
 	m_scale++;
     }
-
 };
 #endif				//__DYNARRAY_H

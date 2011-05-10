@@ -11,41 +11,40 @@
 #include "dynarray.h"
 
 
-UniqueTable::UniqueTable(int K, hfunc h, cfunc c) : m_numlevels(K + 1), m_hashfunc(h), m_compare(c)
+UniqueTable::UniqueTable(int K, hfunc h, cfunc c) : m_numlevels(K+1), m_hashfunc(h), m_compare(c) 
 {
-    m_table = new table_node **[m_numlevels];
-    for (unsigned int i = 0; i < m_numlevels; i++) {
-	m_table[i] = new table_node *[TABLE_SIZE];
-	for (unsigned int j = 0; j < TABLE_SIZE; j++) {
-	    m_table[i][j] = NULL;
-	}
-    }
-}
-
-UniqueTable::~UniqueTable()
-{
-    table_node *cur;
-
-    for (unsigned int i = 0; i < m_numlevels; i++) {
-	for (unsigned int j = 0; j < TABLE_SIZE; j++) {
-	    while (m_table[i][j] != NULL) {
-		cur = m_table[i][j];
-		m_table[i][j] = cur->next;
-		delete cur;
+	m_table = new table_node **[m_numlevels];
+	for (unsigned int i = 0; i < m_numlevels; i++) {
+	    m_table[i] = new table_node *[TABLE_SIZE];
+	    for (unsigned int j = 0; j < TABLE_SIZE; j++) {
+		m_table[i][j] = NULL;
 	    }
 	}
-	delete[]m_table[i];
     }
-    delete[]m_table;
-}
+UniqueTable::~UniqueTable() {
+	m_table_node *cur;
 
-node_idx UniqueTable::look_up(level k, node_idx p)
+	for (unsigned int i = 0; i < m_numlevels; i++) {
+	    for (unsigned int j = 0; j < TABLE_SIZE; j++) {
+		while (m_table[i][j] != NULL) {
+		    cur = m_table[i][j];
+		    m_table[i][j] = cur->next;
+		    delete cur;
+		}
+	    }
+	    delete[] m_table[i];
+	}
+	delete[] m_table;
+    }
+
+node_idx
+ UniqueTable::look_up(level k, node_idx p)
 {
     table_node *cur;
     unsigned int idx;
 
     idx = m_hashfunc(k, p) % TABLE_SIZE;
-    cur = m_table[k][idx];
+    cur = table[k][idx];
     while (cur != NULL) {
 	if (m_compare(k, p, cur->p) == 1) {
 	    return cur->p;

@@ -125,7 +125,7 @@ int fddl_forest::LessThan(mdd_handle root, int value, mdd_handle & result)
     node_idx newresult;
 
     for (level k = K; k > 0; k--)
-	LessThanCache[k]->Clear();
+	LessThanCache[k]->clear();
     newresult = InternalLessThan(K, root.index, value);
     if (result.index != newresult) {
 	ReallocHandle(result);
@@ -155,7 +155,7 @@ int fddl_forest::Apply(mdd_handle * roots, int num_roots,
     }
 
     for (level k = K; k > 0; k--)
-	ApplyCache[k]->Clear();
+	ApplyCache[k]->clear();
 
     newresult = InternalApply(K, indices, num_roots, func);
     if (result.index != newresult) {
@@ -213,8 +213,8 @@ int fddl_forest::Replace(mdd_handle p, mdd_handle q, bool strict,
     node_idx newresult;
 
     for (level k = K; k > 0; k--) {
-	ReplaceCache[k]->Clear();
-	ReplaceStrictCache[k]->Clear();
+	ReplaceCache[k]->clear();
+	ReplaceStrictCache[k]->clear();
     }
     if (p.index < 0)
 	return INVALID_MDD;
@@ -240,7 +240,7 @@ int fddl_forest::ProjectOnto(mdd_handle p, mdd_handle q,
     node_idx newresult;
 
     for (level k = K; k > 0; k--) {
-	ProjectOntoCache[k]->Clear();
+	ProjectOntoCache[k]->clear();
     }
     if (p.index < 0)
 	return INVALID_MDD;
@@ -291,7 +291,7 @@ node_idx fddl_forest::InternalLessThan(level k, node_idx p, int value)
 	return 0;
     }
 
-    result = LessThanCache[k]->Hit(p, value);
+    result = LessThanCache[k]->hit(p, value);
     if (result >= 0)
 	return result;
 
@@ -303,7 +303,7 @@ node_idx fddl_forest::InternalLessThan(level k, node_idx p, int value)
 	SetArc(k, result, i, u);
     }
     result = CheckIn(k, result);
-    LessThanCache[k]->Add(p, value, result);
+    LessThanCache[k]->add(result, p, value);
     return result;
 }
 
@@ -320,7 +320,7 @@ node_idx
 	return func(roots, num_roots);
     };
 
-    result = ApplyCache[k]->Hit(roots, num_roots);
+    result = ApplyCache[k]->hit(roots, num_roots);
     if (result >= 0)
 	return result;
 
@@ -341,7 +341,7 @@ node_idx
 	SetArc(k, result, j, u);
     }
     result = CheckIn(k, result);
-    ApplyCache[k]->Add(roots, num_roots, result);
+    ApplyCache[k]->add(result, roots, num_roots);
     delete[]indices;
     return result;
 }
@@ -360,7 +360,7 @@ node_idx fddl_forest::InternalValRestrict(level k, node_idx p, int value)
 	return 0;
     };
 
-    result = ValRestrictCache[k]->Hit(p, value);
+    result = ValRestrictCache[k]->hit(p, value);
     if (result >= 0)
 	return result;
 
@@ -383,7 +383,7 @@ node_idx fddl_forest::InternalValRestrict(level k, node_idx p, int value)
 	SetArc(k, result, i, u);
     }
     result = CheckIn(k, result);
-    ValRestrictCache[k]->Add(p, value, result);
+    ValRestrictCache[k]->add(result, p, value);
     delete[]ptemp;
     return result;
 }
@@ -407,7 +407,7 @@ node_idx
 
     node_idx r;
 
-    r = SelectCache[k]->Hit(p, child_array, num_chains);
+    r = SelectCache[k]->hit(p, child_array, num_chains);
     if (r >= 0)
 	return r;
 
@@ -437,7 +437,7 @@ node_idx
 	//No.
     }
     r = CheckIn(k, r);
-    SelectCache[k]->Add(p, child_array, num_chains, r);
+    SelectCache[k]->add(r, p, child_array, num_chains);
     return r;
 }
 
@@ -463,7 +463,7 @@ node_idx fddl_forest::InternalReplace(level k, node_idx p, node_idx q)
 
     node_idx r;
 
-    r = ReplaceCache[k]->Hit(p, q);
+    r = ReplaceCache[k]->hit(p, q);
     if (r >= 0)
 	return r;
 
@@ -486,7 +486,7 @@ node_idx fddl_forest::InternalReplace(level k, node_idx p, node_idx q)
 	SetArc(k, r, i, u);
     }
     r = CheckIn(k, r);
-    ReplaceCache[k]->Add(p, q, r);
+    ReplaceCache[k]->add(r, p, q);
     return r;
 }
 
@@ -505,7 +505,7 @@ node_idx fddl_forest::InternalProjectOnto(level k, node_idx p, node_idx q)
 
     node_idx r;
 
-    r = ProjectOntoCache[k]->Hit(p, q);
+    r = ProjectOntoCache[k]->hit(p, q);
     if (r >= 0)
 	return r;
 
@@ -530,7 +530,7 @@ node_idx fddl_forest::InternalProjectOnto(level k, node_idx p, node_idx q)
 	SetArc(k, r, i, u);
     }
     r = CheckIn(k, r);
-    ProjectOntoCache[k]->Add(p, q, r);
+    ProjectOntoCache[k]->add(r, p, q);
     return r;
 }
 
@@ -555,7 +555,7 @@ node_idx
 
     node_idx r;
 
-    r = ReplaceStrictCache[k]->Hit(p, q);
+    r = ReplaceStrictCache[k]->hit(p, q);
     if (r >= 0) {
 	return r;
     }
@@ -581,7 +581,7 @@ node_idx
 	SetArc(k, r, i, u);
     }
     r = CheckIn(k, r);
-    ReplaceStrictCache[k]->Add(p, q, r);
+    ReplaceStrictCache[k]->add(r, p, q);
     return r;
 }
 
@@ -608,7 +608,7 @@ node_idx
 	return p;
     }
     dummy = 1;
-    result = CombineCache[k]->Hit(p, q, chain_index);
+    result = CombineCache[k]->hit(p, q, chain_index);
     if (result >= 0)
 	return result;
 
@@ -642,7 +642,7 @@ node_idx
     delete[]qtemp;
     delete[]ptemp;
     result = CheckIn(k, result);
-    CombineCache[k]->Add(p, q, chain_index, result);
+    CombineCache[k]->add(result, p, q, chain_index);
     return result;
 }
 
@@ -718,7 +718,7 @@ node_idx fddl_forest::InternalMin(level k, node_idx p, node_idx q)
     //Check for an entry in the Cache.
     node_idx result;
 
-    result = MinCache[k]->Hit(p, q);
+    result = MinCache[k]->hit(p, q);
     if (result >= 0) {
 	if (!(FDDL_NODE(k, result).flags & DELETED))
 	    return result;
@@ -814,10 +814,10 @@ node_idx fddl_forest::InternalMin(level k, node_idx p, node_idx q)
 
 //      if (k > 0 && newresult)
 //              FDDL_NODE(k, newresult).flags |= CHECKED_IN;
-    MinCache[k]->Add(p, q, newresult);
-    MinCache[k]->Add(q, p, newresult);
-    MinCache[k]->Add(p, newresult, newresult);
-    MinCache[k]->Add(q, newresult, newresult);
+    MinCache[k]->add(newresult, p, q);
+    MinCache[k]->add(newresult, q, p);
+    MinCache[k]->add(newresult, p, newresult);
+    MinCache[k]->add(newresult, q, newresult);
     return newresult;
 }
 
@@ -832,7 +832,7 @@ node_idx fddl_forest::InternalComplement(level k, node_idx p)
     //Check for an entry in the Cache.
     node_idx result;
 
-    result = ComplementCache[k]->Hit(p);
+    result = ComplementCache[k]->hit(p);
     if (result >= 0) {
 	if (!(FDDL_NODE(k, result).flags & DELETED))
 	    return result;
@@ -848,8 +848,8 @@ node_idx fddl_forest::InternalComplement(level k, node_idx p)
 	for (int i = 0; i <= maxVals[k]; i++)
 	    SetArc(k, result, i, InternalComplement(k - 1, 0));
 	newresult = CheckIn(k, result);
-	ComplementCache[k]->Add(p, newresult);
-	ComplementCache[k]->Add(newresult, p);
+	ComplementCache[k]->add(newresult, p);
+	ComplementCache[k]->add(p, newresult);
 	return newresult;
     }
 
@@ -874,8 +874,8 @@ node_idx fddl_forest::InternalComplement(level k, node_idx p)
 //              if (k > 0 && newresult)
 //                      FDDL_NODE(k, newresult).flags |= CHECKED_IN;
 
-	ComplementCache[k]->Add(p, 1, newresult);
-	ComplementCache[k]->Add(newresult, 1, p);
+	ComplementCache[k]->add(newresult, p, 1);
+	ComplementCache[k]->add(p, newresult, 1);
     } else {
 	//If the node is sparse, do things the fast way!
 	int i = 0;
@@ -896,8 +896,8 @@ node_idx fddl_forest::InternalComplement(level k, node_idx p)
 //              if (k > 0 && newresult)
 //                      FDDL_NODE(k, newresult).flags |= CHECKED_IN;
 
-	ComplementCache[k]->Add(p, 1, newresult);
-	ComplementCache[k]->Add(newresult, 1, p);
+	ComplementCache[k]->add(newresult, p, 1);
+	ComplementCache[k]->add(p, newresult, 1);
     }
     return newresult;
 }
@@ -913,7 +913,7 @@ node_idx fddl_forest::InternalBComplement(level k, node_idx p)
     //Check for an entry in the Cache.
     node_idx result;
 
-    result = BComplementCache[k]->Hit(p);
+    result = BComplementCache[k]->hit(p);
     if (result >= 0) {
 	if (!(FDDL_NODE(k, result).flags & DELETED))
 	    return result;
@@ -929,8 +929,8 @@ node_idx fddl_forest::InternalBComplement(level k, node_idx p)
 	for (int i = 0; i <= maxVals[k]; i++)
 	    SetArc(k, result, i, InternalBComplement(k - 1, 0));
 	newresult = CheckIn(k, result);
-	BComplementCache[k]->Add(p, newresult);
-	BComplementCache[k]->Add(newresult, p);
+	BComplementCache[k]->add(newresult, p);
+	BComplementCache[k]->add(p, newresult);
 	return newresult;
     }
 
@@ -977,8 +977,8 @@ node_idx fddl_forest::InternalBComplement(level k, node_idx p)
 //                      FDDL_NODE(k, newresult).flags |= CHECKED_IN;
     }
 
-    BComplementCache[k]->Add(p, newresult);
-    BComplementCache[k]->Add(newresult, p);
+    BComplementCache[k]->add(newresult, p);
+    BComplementCache[k]->add(p, newresult);
     return newresult;
 }
 
@@ -1105,7 +1105,7 @@ int fddl_forest::Shift(mdd_handle h, level kold, mdd_handle & result)
     node_idx newresult;
 
     for (level k = K; k > 0; k--)
-	ShiftCache[k]->Clear();
+	ShiftCache[k]->clear();
 
     level current = kold;
     newresult = h.index;
@@ -1137,7 +1137,7 @@ node_idx fddl_forest::InternalShift(level k, node_idx p, level target)
 
     nodeP = &FDDL_NODE(k, p);
 
-    r = ShiftCache[k]->Hit(p, target);
+    r = ShiftCache[k]->hit(p, target);
     if (r >= 0)
 	return r;
 
@@ -1150,7 +1150,7 @@ node_idx fddl_forest::InternalShift(level k, node_idx p, level target)
 	    SetArc(k, r, i, InternalShift(k - 1, m, target));
 	}
 	r = CheckIn(k, r);
-	ShiftCache[k]->Add(p, target, r);
+	ShiftCache[k]->add(r, p, target);
 	return r;
     }
 
@@ -1199,6 +1199,6 @@ node_idx fddl_forest::InternalShift(level k, node_idx p, level target)
 #ifndef NON_DEBUG
     printf("Checked in Node.  Result: %d\n", r);
 #endif
-    ShiftCache[k]->Add(p, target, r);
+    ShiftCache[k]->add(r, p, target);
     return r;
 }

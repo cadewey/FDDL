@@ -52,14 +52,14 @@ fddl_forest::fddl_forest(int numlevels, int *maxvals)
     //Initialize structures for a dynamic array of MDD nodes and arcs
     //for each level of the forest.
 
-    nodes = new Dynarray < node > *[K + 1];
-    arcs = new Dynarray < node_idx > *[K + 1];
-    labels = new Dynarray < label * >*[K + 1];
+    nodes = new DynArray < node > *[K + 1];
+    arcs = new DynArray < node_idx > *[K + 1];
+    labels = new DynArray < label * >*[K + 1];
 
     for (int k = 1; k <= K; k++) {
-	nodes[k] = new Dynarray < node >;
-	arcs[k] = new Dynarray < node_idx > (0);
-	labels[k] = new Dynarray < label * >(0);
+	nodes[k] = new DynArray < node >;
+	arcs[k] = new DynArray < node_idx > (0);
+	labels[k] = new DynArray < label * >(0);
     }
 
     //Keep track of the last used position of the node and arc arrays
@@ -74,7 +74,7 @@ fddl_forest::fddl_forest(int numlevels, int *maxvals)
     }
 
     //Initialize caches for common operations
-    node_remap_array = new Dynarray < node_idx > *[K + 1];
+    node_remap_array = new DynArray < node_idx > *[K + 1];
 
     for (level k = K; k > 0; k--)
 	node_remap_array[k] = NULL;
@@ -122,7 +122,7 @@ fddl_forest::fddl_forest(int numlevels, int *maxvals)
     }
 
     //Create a hashtable of K levels to act as the Unique Table
-    UT = new uniquetable(K, ExternalHashNode, ExternalCompare);
+    UT = new UniqueTable(K, ExternalHashNode, ExternalCompare);
     garbage_alg = O_LAZY;
     garbage_threshold = 1;
 }
@@ -192,7 +192,7 @@ node_idx fddl_forest::InternalMax(level k, node_idx p, node_idx q)
     //Check for an entry in the Cache.
     node_idx result;
 
-    result = MaxCache[k]->Hit(p, q);
+    result = MaxCache[k]->hit(p, q);
     if (result >= 0) {
 	if (!(FDDL_NODE(k, result).flags & DELETED))
 	    return result;
@@ -308,10 +308,10 @@ node_idx fddl_forest::InternalMax(level k, node_idx p, node_idx q)
 
 //  if (k > 0 && newresult)
 //    FDDL_NODE (k, newresult).flags |= CHECKED_IN;
-    MaxCache[k]->Add(p, q, newresult);
-    MaxCache[k]->Add(q, p, newresult);
-    MaxCache[k]->Add(p, newresult, newresult);
-    MaxCache[k]->Add(q, newresult, newresult);
+    MaxCache[k]->add(newresult, p, q);
+    MaxCache[k]->add(newresult, q, p);
+    MaxCache[k]->add(newresult, p, newresult);
+    MaxCache[k]->add(newresult, q, newresult);
     return newresult;
 }
 
@@ -328,7 +328,7 @@ node_idx fddl_forest::InternalRestrict(level k, node_idx p, node_idx q)
     //Check for an entry in the Cache.
     node_idx result;
 
-    result = RestrictCache[k]->Hit(p, q);
+    result = RestrictCache[k]->hit(p, q);
     if (result >= 0) {
 	if (!(FDDL_NODE(k, result).flags & DELETED))
 	    return result;
@@ -448,7 +448,7 @@ node_idx fddl_forest::InternalRestrict(level k, node_idx p, node_idx q)
 
 //  if (k > 0 && newresult)
 //    FDDL_NODE (k, newresult).flags |= CHECKED_IN;
-    RestrictCache[k]->Add(p, q, newresult);
+    RestrictCache[k]->add(newresult, p, q);
     return newresult;
 }
 
@@ -516,7 +516,7 @@ node_idx fddl_forest::CheckIn(level k, node_idx p)
     node_idx q;
 
     thisForest = this;
-    q = UT->Add(k, p);
+    q = UT->add(k, p);
 
     node *nodeQ;
     nodeQ = &FDDL_NODE(k, q);
@@ -555,7 +555,7 @@ node_idx fddl_forest::NewNode(level k)
     /*
      * if (node_remap_array[K])
      * delete node_remap_array[K];
-     * node_remap_array[K] = new Dynarray < node_idx > (0);
+     * node_remap_array[K] = new DynArray < node_idx > (0);
      * (*(*node_remap_array[K])[0]) = 0;
      */
     node *nodeP;
@@ -605,7 +605,7 @@ void fddl_forest::DeleteDownstream(level k, node_idx p)
     numnodes--;
     nodeP->flags |= DELETED;
     thisForest = this;
-    UT->Delete(k, p);
+    UT->remove(k, p);
     for (int i = 0; i < nodeP->size; i++) {
 	SetArc(k, p, i, 0);
     }
@@ -615,8 +615,8 @@ void fddl_forest::DeleteDownstream(level k, node_idx p)
 
 void fddl_forest::CompactTopLevel()
 {
-    Dynarray < node_idx > *arc_temp_array;	//Store the new arcs for level K
-    arc_temp_array = new Dynarray < node_idx > (0);
+    DynArray < node_idx > *arc_temp_array;	//Store the new arcs for level K
+    arc_temp_array = new DynArray < node_idx > (0);
     node_idx i;
     arc_idx j;
 
@@ -627,10 +627,10 @@ void fddl_forest::CompactTopLevel()
     printf("Compact Top Level\n");
 #endif
 
-    //node_remap_array[K] = new Dynarray <node_idx> (0);
+    //node_remap_array[K] = new DynArray <node_idx> (0);
     thisForest = this;
     for (i = 1; i < last[K]; i++)
-	UT->Delete(K, i);
+	UT->remove(K, i);
     for (i = 1; i < last[K]; i++) {	//Scan throught the NODE list (except node 0)
 	node *nodeI = &FDDL_NODE(K, i);
 
@@ -655,7 +655,7 @@ void fddl_forest::CompactTopLevel()
 	    }
 	    nodeI->down = newdown;
 	    thisForest = this;
-	    UT->Add(K, i);
+	    UT->add(K, i);
 	    numvalidnodes++;
 	}
 	//If it IS deleted, all we do is take it out of the unique table.  
@@ -687,11 +687,11 @@ void fddl_forest::Compact(level k)
 	return;
     }
 
-    Dynarray < node_idx > *arc_temp_array;	//Store the new arcs for level k
-    arc_temp_array = new Dynarray < node_idx > (0);
+    DynArray < node_idx > *arc_temp_array;	//Store the new arcs for level k
+    arc_temp_array = new DynArray < node_idx > (0);
 
-    Dynarray < node > *node_temp_array;
-    node_temp_array = new Dynarray < node >;	//Store the nodes here
+    DynArray < node > *node_temp_array;
+    node_temp_array = new DynArray < node >;	//Store the nodes here
 
     //Store a mapping of old->new of 
     //node indices so that we can re-hash
@@ -701,7 +701,7 @@ void fddl_forest::Compact(level k)
 
 	node_remap_array[k] = NULL;
     }
-    node_remap_array[k] = new Dynarray < node_idx > (0);
+    node_remap_array[k] = new DynArray < node_idx > (0);
 
     //thisForest = this;
     //UT->ClearLevelOfUT(k+1);
@@ -749,7 +749,7 @@ void fddl_forest::Compact(level k)
 	    numvalidnodes++;
 	} else {		//If it IS deleted, "DeleteDownstream" it.
 	    thisForest = this;
-	    UT->Delete(k, i);
+	    UT->remove(k, i);
 	    assert(nodeI->flags & DELETED);
 	    if (k >= 2) {
 		for (j = 0; j < nodeI->size; j++) {
@@ -771,7 +771,7 @@ void fddl_forest::Compact(level k)
     nodes[k] = node_temp_array;
 
     thisForest = this;
-    UT->Remap(k, node_remap_array[k]);	//Update all the unique table entries
+    UT->remap(k, node_remap_array[k]);	//Update all the unique table entries
 
     delete arcs[k];
 
@@ -808,7 +808,7 @@ void fddl_forest::Compact(level k)
 
 	if ((nodeI->flags & CHECKED_IN) && !IS_DELETED(nodeI)) {
 	    thisForest = this;
-	    int s = UT->Add(k + 1, i);
+	    int s = UT->add(k + 1, i);
 	    //@@@DEBUG: Removed for testing. @@@//
 	    assert(s == i);
 	}
@@ -819,14 +819,14 @@ void fddl_forest::Compact(level k)
 //Flush all caches associated with level k.
 void fddl_forest::FlushCaches(level k)
 {
-    MaxCache[k]->Clear();
-    RestrictCache[k]->Clear();
-    ReplaceCache[k]->Clear();
-    SelectCache[k]->Clear();
-    ComplementCache[k]->Clear();
-    BComplementCache[k]->Clear();
-    MinCache[k]->Clear();
-    PrintCache[k]->Clear();
+    MaxCache[k]->clear();
+    RestrictCache[k]->clear();
+    ReplaceCache[k]->clear();
+    SelectCache[k]->clear();
+    ComplementCache[k]->clear();
+    BComplementCache[k]->clear();
+    MinCache[k]->clear();
+    PrintCache[k]->clear();
 }
 
 //Point arc <k,p>[i] at node <k-1,j>
@@ -916,13 +916,13 @@ int fddl_forest::UnpackNode(level k, arc_idx p, int *&fullarray)
     return psize;
 }
 
-Dynarray < int *>*states;
+DynArray < int *>*states;
 int counter;
 int *tempStates;
 
 void fddl_forest::PrintStates(node_idx root)
 {
-    states = new Dynarray < int *>;
+    states = new DynArray < int *>;
 
     counter = 0;
     tempStates = new int[K + 1];
@@ -1151,7 +1151,7 @@ int fddl_forest::InternalPrintVals(level k, node_idx p)
 	}
 	return 0;
     }
-    flag = PrintCache[k]->Hit(p);
+    flag = PrintCache[k]->hit(p);
     if (flag >= 0) {
 	return flag;
     }
@@ -1167,10 +1167,10 @@ int fddl_forest::InternalPrintVals(level k, node_idx p)
     }
     if (flag == 1) {
 	nodeP->flags += SHARED;
-	PrintCache[k]->Add(p, 1);
+	PrintCache[k]->add(1, p);
 	return 1;
     }
-    PrintCache[k]->Add(k, p, 0);
+    PrintCache[k]->add(0, k, p);
     return 0;
 }
 
@@ -1188,7 +1188,7 @@ node_idx fddl_forest::ProjectVals(level k, node_idx p, level cutoff)
 	return 1;
 
     //Check Cache
-    result = ProjectCache[k]->Hit(p);
+    result = ProjectCache[k]->hit(p);
     if (result >= 0) {
 	return result;
     }
@@ -1208,7 +1208,7 @@ node_idx fddl_forest::ProjectVals(level k, node_idx p, level cutoff)
 		SetArc(k, result, i, flag);
 	    }
 	    result = CheckIn(k, result);
-	    ProjectCache[k]->Add(p, result);
+	    ProjectCache[k]->add(result, p);
 	    return result;
 	}
     } else {
@@ -1218,7 +1218,7 @@ node_idx fddl_forest::ProjectVals(level k, node_idx p, level cutoff)
 		   ProjectVals(k - 1, FDDL_ARC(k, nodeP, i), cutoff));
 	}
 	result = CheckIn(k, result);
-	ProjectCache[k]->Add(p, result);
+	ProjectCache[k]->add(result, p);
 	return result;
     }
     return 0;
@@ -1239,7 +1239,7 @@ node_idx fddl_forest::Projection(level k, node_idx p, level * mask)
 	return 1;
 
     //Check Cache
-    result = ProjectCache[k]->Hit(p);
+    result = ProjectCache[k]->hit(p);
     if (result >= 0) {
 	return result;
     }
@@ -1258,7 +1258,7 @@ node_idx fddl_forest::Projection(level k, node_idx p, level * mask)
 		SetArc(k, result, i, flag);
 	    }
 	    result = CheckIn(k, result);
-	    ProjectCache[k]->Add(p, result);
+	    ProjectCache[k]->add(result, p);
 	    return result;
 	}
     } else {
@@ -1268,7 +1268,7 @@ node_idx fddl_forest::Projection(level k, node_idx p, level * mask)
 		   Projection(k - 1, FDDL_ARC(k, nodeP, i), mask));
 	}
 	result = CheckIn(k, result);
-	ProjectCache[k]->Add(p, result);
+	ProjectCache[k]->add(result, p);
 	return result;
     }
     return 0;
@@ -1329,7 +1329,7 @@ for (node_idx i=0; i< last[K];i++)
          }
 */
     for (level k = K; k > 0; k--)
-	PruneCache[k]->Clear();
+	PruneCache[k]->clear();
     InternalPruneMDD(K, p.index, 1);
     for (level k = K; k > 0; k--) {
 	for (node_idx q = 1; q < last[k]; q++) {
@@ -1342,14 +1342,14 @@ for (node_idx i=0; i< last[K];i++)
 	}
     }
     for (level k = K; k > 0; k--)
-	PruneCache[k]->Clear();
+	PruneCache[k]->clear();
     InternalPruneMDD(K, p.index, 1);
 }
 
 void fddl_forest::PruneMDD(node_idx p)
 {
     for (level k = K; k > 0; k--)
-	PruneCache[k]->Clear();
+	PruneCache[k]->clear();
     InternalPruneMDD(K, p, 1);
     for (level k = K; k > 0; k--) {
 	for (node_idx q = 1; q < last[k]; q++) {
@@ -1362,7 +1362,7 @@ void fddl_forest::PruneMDD(node_idx p)
 	}
     }
     for (level k = K; k > 0; k--)
-	PruneCache[k]->Clear();
+	PruneCache[k]->clear();
     InternalPruneMDD(K, p, 1);
 }
 
@@ -1374,7 +1374,7 @@ void fddl_forest::InternalPruneMDD(level k, node_idx p, int flag)
     if (k == 0 || p == 0)
 	return;
     nodeP = &FDDL_NODE(k, p);
-    result = PruneCache[k]->Hit(p);
+    result = PruneCache[k]->hit(p);
     if (result == 1)
 	return;
     if (flag == 0) {
@@ -1388,7 +1388,7 @@ void fddl_forest::InternalPruneMDD(level k, node_idx p, int flag)
     for (int i = 0; i < nodeP->size; i++) {
 	InternalPruneMDD(k - 1, FDDL_ARC(k, nodeP, i), flag);
     }
-    PruneCache[k]->Add(p, 1);
+    PruneCache[k]->add(1, p);
 }
 
 void fddl_forest::PrintMDD()
@@ -1488,12 +1488,12 @@ void fddl_forest::LoadMDD(char *filename)
     fscanf(inFile, "%d\n", &K);
     maxVals = new int[K + 1];
 
-    nodes = new Dynarray < node > *[K + 1];
-    arcs = new Dynarray < node_idx > *[K + 1];
+    nodes = new DynArray < node > *[K + 1];
+    arcs = new DynArray < node_idx > *[K + 1];
 
     for (int k = 1; k <= K; k++) {
-	nodes[k] = new Dynarray < node >;
-	arcs[k] = new Dynarray < node_idx >;
+	nodes[k] = new DynArray < node >;
+	arcs[k] = new DynArray < node_idx >;
     }
     last = new node_idx[K + 1];
     tail = new int[K + 1];

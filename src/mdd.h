@@ -223,11 +223,11 @@ class fddl_forest {
     void Attach(mdd_handle & ref, node_idx i) {
 	ref.index = i;
 	(*(*nodes[K])[i]).in++;
-    } Dynarray < node_idx > **node_remap_array;
+    } DynArray < node_idx > **node_remap_array;
 
-    Dynarray < node > **nodes;	//An array [1..K] of heaps of MDD nodes.
-    Dynarray < node_idx > **arcs;	//An array [1..K] of heaps of MDD arcs.
-    Dynarray < label * >**labels;	//An array [1..K] of labels for each arc.
+    DynArray < node > **nodes;	//An array [1..K] of heaps of MDD nodes.
+    DynArray < node_idx > **arcs;	//An array [1..K] of heaps of MDD arcs.
+    DynArray < label * >**labels;	//An array [1..K] of labels for each arc.
 
     //Build a new MDD forest of numlevels levels.
     //The domain of each level is specified as an integer range
@@ -417,7 +417,7 @@ class fddl_forest {
     void Compact(level k);
     void CompactTopLevel();
 
-    uniquetable *UT;		//A special hashtable, the unique table, for storing
+    UniqueTable *UT;		//A special hashtable, the unique table, for storing
 
     //node information.
 

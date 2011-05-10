@@ -7,61 +7,38 @@
  * information.
  */
 
-#ifndef FDDL_UNIQUE_TABLE_H
-#   define FDDL_UNIQUE_TABLE_H 1
+#ifndef __UNIQUE_TABLE_H
+#define __UNIQUE_TABLE_H
 
-#   include "mddtypes.h"
-#   include "dynarray.h"
+#include "mddtypes.h"
+template <class T> class DynArray;
 
-#   define TABLE_SIZE 1009
-class uniquetable {
+const unsigned int TABLE_SIZE = 1009;
 
-    unsigned int (*hashfunc) (level, node_idx);
-    int (*compare) (level, node_idx, node_idx);
-    class table_node {
-      public:
-	level k;
-	node_idx p;
-	table_node *next;
-	 table_node() {
-	    next = NULL;
-    }};
+typedef unsigned int (*hfunc)(level, node_idx);
+typedef int (*cfunc)(level, node_idx, node_idx);
 
-    table_node ***table;
-    int numlevels;
+class UniqueTable {
+	private:
+		hfunc m_hashfunc;
+		cfunc m_compare;
+		struct table_node {
+			level k;
+			node_idx p;
+			table_node *next;
+			table_node() {
+			    next = NULL;
+		        }
+		    };
+		table_node ***m_table;
+		unsigned int m_numlevels;
 
   public:
-    uniquetable(int K, unsigned int (*h) (level, node_idx),
-		int (*c) (level, node_idx, node_idx)) {
-	numlevels = K + 1;
-	table = new table_node **[numlevels];
-	for (int i = 0; i < numlevels; i++) {
-	    table[i] = new table_node *[TABLE_SIZE];
-	    for (int j = 0; j < TABLE_SIZE; j++) {
-		table[i][j] = NULL;
-	    }
-	}
-	hashfunc = h;
-	compare = c;
-    }
-    ~uniquetable() {
-	table_node *cur;
-
-	for (int i = 0; i < numlevels; i++) {
-	    for (int j = 0; j < TABLE_SIZE; j++) {
-		while (table[i][j] != NULL) {
-		    cur = table[i][j];
-		    table[i][j] = cur->next;
-		    delete cur;
-		}
-	    }
-	    delete[]table[i];
-	}
-	delete[]table;
-    }
-    int LookUp(level k, node_idx p);
-    int Add(level k, node_idx p);
-    int Delete(level k, node_idx p);
-    int Remap(level k, Dynarray < node_idx > *transTable);
+    UniqueTable(int K, hfunc h, cfunc c);
+    ~UniqueTable();
+    int look_up(level k, node_idx p);
+    int add(level k, node_idx p);
+    int remove(level k, node_idx p);
+    int remap(level k, DynArray < node_idx > *transTable);
 };
-#endif
+#endif //__UNIQUE_TABLE_H
