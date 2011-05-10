@@ -1,6 +1,6 @@
 /*
- * FDDL : The Free Decision Diagram Library Copyright (C) 2004 Robert
- * Marmorstein
+ * FDDL : The Free Decision Diagram Library 
+ * Copyright (C) 2004 Robert Marmorstein
  * 
  * This program is released under the GNU Public License, version 2.  Please
  * see the file "LICENSE" in the root directory of this repository for more
