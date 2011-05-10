@@ -54,15 +54,15 @@ fddl_forest::fddl_forest (int numlevels, int *maxvals)
   //Initialize structures for a dynamic array of MDD nodes and arcs
   //for each level of the forest.
 
-  nodes = new dynarray < node > *[K + 1];
-  arcs = new dynarray < node_idx > *[K + 1];
-  labels = new dynarray < label * >*[K + 1];
+  nodes = new Dynarray < node > *[K + 1];
+  arcs = new Dynarray < node_idx > *[K + 1];
+  labels = new Dynarray < label * >*[K + 1];
 
   for (int k = 1; k <= K; k++)
     {
-      nodes[k] = new dynarray < node >;
-      arcs[k] = new dynarray < node_idx > (0);
-      labels[k] = new dynarray < label * >(0);
+      nodes[k] = new Dynarray < node >;
+      arcs[k] = new Dynarray < node_idx > (0);
+      labels[k] = new Dynarray < label * >(0);
     }
 
   //Keep track of the last used position of the node and arc arrays
@@ -78,7 +78,7 @@ fddl_forest::fddl_forest (int numlevels, int *maxvals)
     }
 
   //Initialize caches for common operations
-  node_remap_array = new dynarray < node_idx > *[K + 1];
+  node_remap_array = new Dynarray < node_idx > *[K + 1];
 
   for (level k = K; k > 0; k--)
     node_remap_array[k] = NULL;
@@ -689,7 +689,7 @@ node_idx fddl_forest::NewNode (level k)
   /*
    * if (node_remap_array[K])
    * delete node_remap_array[K];
-   * node_remap_array[K] = new dynarray < node_idx > (0);
+   * node_remap_array[K] = new Dynarray < node_idx > (0);
    * (*(*node_remap_array[K])[0]) = 0;
    */
   node *
@@ -754,8 +754,8 @@ fddl_forest::DeleteDownstream (level k, node_idx p)
 void
 fddl_forest::CompactTopLevel ()
 {
-  dynarray < node_idx > *arc_temp_array;	//Store the new arcs for level K
-  arc_temp_array = new dynarray < node_idx > (0);
+  Dynarray < node_idx > *arc_temp_array;	//Store the new arcs for level K
+  arc_temp_array = new Dynarray < node_idx > (0);
   node_idx i;
   arc_idx j;
 
@@ -766,7 +766,7 @@ fddl_forest::CompactTopLevel ()
    printf("Compact Top Level\n");
 #endif
 
-  //node_remap_array[K] = new dynarray <node_idx> (0);
+  //node_remap_array[K] = new Dynarray <node_idx> (0);
   thisForest = this;
   for (i = 1; i < last[K]; i++)
     UT->Delete (K, i);
@@ -834,11 +834,11 @@ fddl_forest::Compact (level k)
       return;
   }
 
-  dynarray < node_idx > *arc_temp_array;	//Store the new arcs for level k
-  arc_temp_array = new dynarray < node_idx > (0);
+  Dynarray < node_idx > *arc_temp_array;	//Store the new arcs for level k
+  arc_temp_array = new Dynarray < node_idx > (0);
 
-  dynarray < node > *node_temp_array;
-  node_temp_array = new dynarray < node >;	//Store the nodes here
+  Dynarray < node > *node_temp_array;
+  node_temp_array = new Dynarray < node >;	//Store the nodes here
 
   //Store a mapping of old->new of 
   //node indices so that we can re-hash
@@ -849,7 +849,7 @@ fddl_forest::Compact (level k)
 
       node_remap_array[k] = NULL;
   }
-  node_remap_array[k] = new dynarray < node_idx > (0);
+  node_remap_array[k] = new Dynarray < node_idx > (0);
 
   //thisForest = this;
   //UT->ClearLevelOfUT(k+1);
@@ -1091,14 +1091,14 @@ fddl_forest::UnpackNode (level k, arc_idx p, int *&fullarray)
   return psize;
 }
 
-dynarray < int *>*states;
+Dynarray < int *>*states;
 int counter;
 int *tempStates;
 
 void
 fddl_forest::PrintStates (node_idx root)
 {
-  states = new dynarray < int *>;
+  states = new Dynarray < int *>;
 
   counter = 0;
   tempStates = new int[K + 1];
@@ -1771,13 +1771,13 @@ fddl_forest::LoadMDD (char *filename)
   fscanf (inFile, "%d\n", &K);
   maxVals = new int[K + 1];
 
-  nodes = new dynarray < node > *[K + 1];
-  arcs = new dynarray < node_idx > *[K + 1];
+  nodes = new Dynarray < node > *[K + 1];
+  arcs = new Dynarray < node_idx > *[K + 1];
 
   for (int k = 1; k <= K; k++)
     {
-      nodes[k] = new dynarray < node >;
-      arcs[k] = new dynarray < node_idx >;
+      nodes[k] = new Dynarray < node >;
+      arcs[k] = new Dynarray < node_idx >;
     }
   last = new node_idx[K + 1];
   tail = new int[K + 1];

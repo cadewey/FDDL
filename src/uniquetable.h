@@ -62,6 +62,6 @@ class   uniquetable {
 	int     LookUp(level k, node_idx p);
 	int     Add(level k, node_idx p);
 	int     Delete(level k, node_idx p);
-	int     Remap(level k, dynarray < node_idx >*transTable);
+	int     Remap(level k, Dynarray < node_idx >*transTable);
 };
 #endif

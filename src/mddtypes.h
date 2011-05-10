@@ -7,19 +7,17 @@
  * information.
  */
 
-#ifndef FDDL_MDDTYPES_H
-#   define FDDL_MDDTYPES_H  1
+#ifndef __MDDTYPES_H
+#define __MDDTYPES_H 
 
-#   include <iostream>
-#   include <assert.h>
+#include <iostream>
+#include <assert.h>
+
 using namespace std;
 
-typedef int potential_range_element;	//Local state index, not yet confirmed to be globally reachable.
-typedef int range_element;		  //Globally reachable local state index.
-typedef int event;				  //Event index
-typedef int level;				  //Level index
-typedef int node_idx;			  //MDD Node index
-typedef int arc_idx;				  //MDD Arc index
+typedef int level;			//Level of the MDD
+typedef int node_idx;			//Index of an MDD node in the dynamic node array for a particular level
+typedef int arc_idx;			//Index of an MDD arc in the dynamic arc array for a particular level
 
 class   mdd_handle {
 	friend class fddl_forest;
@@ -56,4 +54,4 @@ class   mdd_handle {
       index = newidx;
    }
 };
-#endif
+#endif //__MDDTYPES_H 

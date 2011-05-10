@@ -9,79 +9,80 @@
 
 //Default was 2, but why not do 4 and spend less time allocating?
 
-template < typename T > class dynarray {
-	T     **data;
-	int     size;
-	T      *defValue;
-        int mag;
+template < typename T > class Dynarray {
+	private:
+		T     **m_data;
+		int     m_size;
+		T      *m_defValue;
+	        int     m_mag;
 
 private:
     void 
     extend()
     {
         T     **newData;
-        newData = new T *[size * mag];
+        newData = new T *[m_size * m_mag];
         assert(newData);
-        for (int i = 0; i < size; i++) {
-            newData[i] = data[i];  //Pointer assignment, not value assignment!
+        for (int i = 0; i < m_size; i++) {
+            newData[i] = m_data[i];  //Pointer assignment, not value assignment!
         }
-        delete[]data;
-        for (int i = size; i < size * mag; i++) {
+        delete[] m_data;
+        for (int i = m_size; i < m_size * m_mag; i++) {
             newData[i] = new T;
-            if (defValue)
-                (*newData[i]) = *defValue;
+            if (m_defValue)
+                (*newData[i]) = *m_defValue;
         }
-        data = newData;
-        size *= mag;
+        m_data = newData;
+        m_size *= m_mag;
         newData = NULL;
-	mag++;
+	m_mag++;
     }
 
 public:
-    dynarray(T const &def)
+    Dynarray(T const &def)
     {
-        data = new T *[256];
-        size = 256;
-        defValue = new T;
-        *defValue = def;
-        for (int i = 0; i < size; i++) {
-            data[i] = new T;
-            *(data[i]) = def;
+        m_data = new T *[256];
+        m_size = 256;
+        m_defValue = new T;
+        *m_defValue = def;
+        for (int i = 0; i < m_size; i++) {
+            m_data[i] = new T;
+            *(m_data[i]) = def;
         }
-	mag = 2;
+	m_mag = 2;
     }
 
-    dynarray()
+    Dynarray()
     {
-	mag = 2;
-        data = new T *[256];
-        size = 256;
-        for (int i = 0; i < size; i++)
-            data[i] = new T;
-        defValue = NULL;
+	m_mag = 2;
+        m_data = new T *[256];
+        m_size = 256;
+        for (int i = 0; i < m_size; i++)
+            m_data[i] = new T;
+        m_defValue = NULL;
     }
     
-    ~dynarray()
+    ~Dynarray()
     {
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < m_size; i++)
 	{
-            if (data[i])
-                delete  data[i];
-            data[i] = NULL;
+            if (m_data[i])
+                delete m_data[i];
+            m_data[i] = NULL;
         }
-        delete[]data;
-        data = NULL;
-        size = -1;
-        if (defValue)
-            delete  defValue;
-        defValue = NULL;
+        delete[] m_data;
+        m_data = NULL;
+        m_size = -1;
+        if (m_defValue)
+            delete  m_defValue;
+        m_defValue = NULL;
     }
 
     T *&operator[] (int index)
     {
-        while (index >= size)
+        while (index >= m_size)
             extend();
-        return data[index];
+        return m_data[index];
     }
 };
 #endif

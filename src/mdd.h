@@ -255,11 +255,11 @@ public:
     (*(*nodes[K])[i]).in++;
   } 
   
-  dynarray < node_idx > **node_remap_array;
+  Dynarray < node_idx > **node_remap_array;
 
-  dynarray < node > **nodes;	//An array [1..K] of heaps of MDD nodes.
-  dynarray < node_idx > **arcs;	//An array [1..K] of heaps of MDD arcs.
-  dynarray < label* > **labels;//An array [1..K] of labels for each arc.
+  Dynarray < node > **nodes;	//An array [1..K] of heaps of MDD nodes.
+  Dynarray < node_idx > **arcs;	//An array [1..K] of heaps of MDD arcs.
+  Dynarray < label* > **labels;//An array [1..K] of labels for each arc.
 
   //Build a new MDD forest of numlevels levels.
   //The domain of each level is specified as an integer range

@@ -78,7 +78,7 @@ uniquetable::Delete(level k, node_idx p)
 }
 
 int
-uniquetable::Remap(level k, dynarray < node_idx >*transTable)
+uniquetable::Remap(level k, Dynarray < node_idx >*transTable)
 {
 	int i;
 	table_node *cur;
