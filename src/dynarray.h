@@ -23,7 +23,7 @@ template < typename T > class DynArray {
     T ** m_data;
     unsigned int m_size;
     unsigned int m_scale;
-    T *m_default_value;
+    const T * m_default_value;
 
   public:
     DynArray() : m_size(DEFAULT_SIZE), m_scale(DEFAULT_SCALE), m_default_value(NULL) 
@@ -34,7 +34,7 @@ template < typename T > class DynArray {
 	}
     }
 
-    DynArray(T const &def) : m_size(DEFAULT_SIZE), m_scale(DEFAULT_SCALE) 
+    DynArray(const T& def) : m_size(DEFAULT_SIZE), m_scale(DEFAULT_SCALE) 
     {
 	m_data = new T *[DEFAULT_SIZE];
 	m_default_value = new T;
@@ -56,7 +56,7 @@ template < typename T > class DynArray {
 	m_default_value = NULL;
     }
 
-    T *&operator[] (const unsigned int index) {
+    T*& operator[] (const unsigned int index) {
 	while (index >= m_size){
 	    extend();
 	}

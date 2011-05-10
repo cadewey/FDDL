@@ -19,7 +19,7 @@
 
 
 int
- fddl_forest::MakeMDDFromTuple(int *low, int *high, mdd_handle & ref)
+ fddl_forest::MakeMDDFromTuple(int *low, int *high, MDDHandle & ref)
 {
     node_idx child, top;
     arc_idx s;
@@ -64,8 +64,8 @@ int
     return SUCCESS;
 }
 
-int fddl_forest::Assign(mdd_handle root, int *low, int *high,
-			mdd_handle & result)
+int fddl_forest::Assign(MDDHandle root, int *low, int *high,
+			MDDHandle & result)
 {
     level k;
     node_idx child, newNode;
@@ -118,7 +118,7 @@ int fddl_forest::Assign(mdd_handle root, int *low, int *high,
     return SUCCESS;
 }
 
-int fddl_forest::LessThan(mdd_handle root, int value, mdd_handle & result)
+int fddl_forest::LessThan(MDDHandle root, int value, MDDHandle & result)
 {
     if (root.index < 0)
 	return INVALID_MDD;
@@ -134,9 +134,9 @@ int fddl_forest::LessThan(mdd_handle root, int value, mdd_handle & result)
     return SUCCESS;
 }
 
-int fddl_forest::Apply(mdd_handle * roots, int num_roots,
+int fddl_forest::Apply(MDDHandle * roots, int num_roots,
 		       node_idx(*func) (node_idx *, int),
-		       mdd_handle & result)
+		       MDDHandle & result)
 {
 
     node_idx *indices;
@@ -166,8 +166,8 @@ int fddl_forest::Apply(mdd_handle * roots, int num_roots,
     return SUCCESS;
 }
 
-int fddl_forest::ValRestrict(mdd_handle root, int value,
-			     mdd_handle & result)
+int fddl_forest::ValRestrict(MDDHandle root, int value,
+			     MDDHandle & result)
 {
     if (root.index < 0)
 	return INVALID_MDD;
@@ -181,8 +181,8 @@ int fddl_forest::ValRestrict(mdd_handle root, int value,
     return SUCCESS;
 }
 
-int fddl_forest::Select(mdd_handle root, int num_chains,
-			mdd_handle * all_roots, mdd_handle & result)
+int fddl_forest::Select(MDDHandle root, int num_chains,
+			MDDHandle * all_roots, MDDHandle & result)
 {
     node_idx *child_array;
     node_idx newresult;
@@ -206,8 +206,8 @@ int fddl_forest::Select(mdd_handle root, int num_chains,
     return SUCCESS;
 }
 
-int fddl_forest::Replace(mdd_handle p, mdd_handle q, bool strict,
-			 mdd_handle & result)
+int fddl_forest::Replace(MDDHandle p, MDDHandle q, bool strict,
+			 MDDHandle & result)
 {
 
     node_idx newresult;
@@ -233,8 +233,8 @@ int fddl_forest::Replace(mdd_handle p, mdd_handle q, bool strict,
     return SUCCESS;
 }
 
-int fddl_forest::ProjectOnto(mdd_handle p, mdd_handle q,
-			     mdd_handle & result)
+int fddl_forest::ProjectOnto(MDDHandle p, MDDHandle q,
+			     MDDHandle & result)
 {
 
     node_idx newresult;
@@ -257,8 +257,8 @@ int fddl_forest::ProjectOnto(mdd_handle p, mdd_handle q,
     return SUCCESS;
 }
 
-int fddl_forest::Combine(mdd_handle root, mdd_handle root2,
-			 int chain_index, mdd_handle & result)
+int fddl_forest::Combine(MDDHandle root, MDDHandle root2,
+			 int chain_index, MDDHandle & result)
 {
     if (root.index < 0)
 	return INVALID_MDD;
@@ -278,7 +278,7 @@ node_idx fddl_forest::InternalLessThan(level k, node_idx p, int value)
 {
     arc_idx i;
     node_idx result, u;
-    node *victim;
+    Node *victim;
     int psize;
 
     if (k == 0) {
@@ -330,7 +330,7 @@ node_idx
 
     for (j = 0; j <= maxVals[k]; j++) {
 	for (i = 0; i < num_roots; i++) {
-	    node *nodeP;
+	    Node *nodeP;
 	    nodeP = &FDDL_NODE(k, roots[i]);
 	    if (j < nodeP->size) {
 		indices[i] = FDDL_ARC(k, nodeP, j);
@@ -350,7 +350,7 @@ node_idx fddl_forest::InternalValRestrict(level k, node_idx p, int value)
 {
     arc_idx i;
     node_idx result, u;
-    node *victim;
+    Node *victim;
     int psize;
     arc_idx *ptemp;
 
@@ -411,8 +411,8 @@ node_idx
     if (r >= 0)
 	return r;
 
-    node *nodeP;
-    node *nodeR;
+    Node *nodeP;
+    Node *nodeR;
 
     r = NewNode(k);
     nodeP = &FDDL_NODE(k, p);
@@ -424,7 +424,7 @@ node_idx
 	grandchild_array = new node_idx[num_chains];
 
 	for (int j = 0; j < num_chains; j++) {
-	    node *nodeJ;
+	    Node *nodeJ;
 
 	    nodeJ = &FDDL_NODE(k, child_array[j]);
 	    grandchild_array[j] = FDDL_ARC(k, nodeJ, i);
@@ -467,9 +467,9 @@ node_idx fddl_forest::InternalReplace(level k, node_idx p, node_idx q)
     if (r >= 0)
 	return r;
 
-    node *nodeP;
-    node *nodeQ;
-    node *nodeR;
+    Node *nodeP;
+    Node *nodeQ;
+    Node *nodeR;
 
     nodeP = &FDDL_NODE(k, p);
     nodeQ = &FDDL_NODE(k, q);
@@ -509,9 +509,9 @@ node_idx fddl_forest::InternalProjectOnto(level k, node_idx p, node_idx q)
     if (r >= 0)
 	return r;
 
-    node *nodeP;
-    node *nodeQ;
-    node *nodeR;
+    Node *nodeP;
+    Node *nodeQ;
+    Node *nodeR;
 
     nodeP = &FDDL_NODE(k, p);
     nodeQ = &FDDL_NODE(k, q);
@@ -560,9 +560,9 @@ node_idx
 	return r;
     }
 
-    node *nodeP;
-    node *nodeQ;
-    node *nodeR;
+    Node *nodeP;
+    Node *nodeQ;
+    Node *nodeR;
 
     nodeP = &FDDL_NODE(k, p);
     nodeQ = &FDDL_NODE(k, q);
@@ -591,7 +591,7 @@ node_idx
 {
     arc_idx i;
     node_idx result, u;
-    node *nodeP, *nodeQ;
+    Node *nodeP, *nodeQ;
     int psize, qsize;
     int dummy;
     arc_idx *ptemp;
@@ -647,7 +647,7 @@ node_idx
 }
 
 int
- fddl_forest::Max(mdd_handle a, mdd_handle b, mdd_handle & result)
+ fddl_forest::Max(MDDHandle a, MDDHandle b, MDDHandle & result)
 {
     if (a.index < 0 || b.index < 0)
 	return MAX_FAILED;
@@ -661,7 +661,7 @@ int
     return SUCCESS;
 }
 
-int fddl_forest::Min(mdd_handle a, mdd_handle b, mdd_handle & result)
+int fddl_forest::Min(MDDHandle a, MDDHandle b, MDDHandle & result)
 {
     if (a.index < 0 || b.index < 0)
 	return MIN_FAILED;
@@ -675,7 +675,7 @@ int fddl_forest::Min(mdd_handle a, mdd_handle b, mdd_handle & result)
     return SUCCESS;
 }
 
-int fddl_forest::Complement(mdd_handle a, mdd_handle & result)
+int fddl_forest::Complement(MDDHandle a, MDDHandle & result)
 {
     if (a.index < 0)
 	return COMPLEMENT_FAILED;
@@ -689,7 +689,7 @@ int fddl_forest::Complement(mdd_handle a, mdd_handle & result)
     return SUCCESS;
 }
 
-int fddl_forest::BinaryComplement(mdd_handle a, mdd_handle & result)
+int fddl_forest::BinaryComplement(MDDHandle a, MDDHandle & result)
 {
     if (a.index < 0)
 	return COMPLEMENT_FAILED;
@@ -726,8 +726,8 @@ node_idx fddl_forest::InternalMin(level k, node_idx p, node_idx q)
     }
 
     result = NewNode(k);
-    node *nodeP = &FDDL_NODE(k, p);
-    node *nodeQ = &FDDL_NODE(k, q);
+    Node *nodeP = &FDDL_NODE(k, p);
+    Node *nodeQ = &FDDL_NODE(k, q);
 
     int psize = nodeP->size;
     int qsize = nodeQ->size;
@@ -855,7 +855,7 @@ node_idx fddl_forest::InternalComplement(level k, node_idx p)
 
     result = NewNode(k);
 
-    node *nodeP = &FDDL_NODE(k, p);
+    Node *nodeP = &FDDL_NODE(k, p);
 
     int psize = nodeP->size;
 
@@ -936,7 +936,7 @@ node_idx fddl_forest::InternalBComplement(level k, node_idx p)
 
     result = NewNode(k);
 
-    node *nodeP = &FDDL_NODE(k, p);
+    Node *nodeP = &FDDL_NODE(k, p);
 
     int psize = nodeP->size;
 
@@ -982,7 +982,7 @@ node_idx fddl_forest::InternalBComplement(level k, node_idx p)
     return newresult;
 }
 
-int fddl_forest::DestroyMDD(mdd_handle mdd)
+int fddl_forest::DestroyMDD(MDDHandle mdd)
 {
 #ifdef BRIEF_DEBUG
     printf("Destroy MDD: %d\n", mdd.index);
@@ -1003,14 +1003,14 @@ int fddl_forest::DestroyMDD(mdd_handle mdd)
     return SUCCESS;
 }
 
-void fddl_forest::ReallocHandle(mdd_handle & ref)
+void fddl_forest::ReallocHandle(MDDHandle & ref)
 {
     if (ref.index > 0) {
 	DestroyMDD(ref);
     }
 }
 
-int fddl_forest::Value(mdd_handle hand, int *tup, int &result)
+int fddl_forest::Value(MDDHandle hand, int *tup, int &result)
 {
     if (hand.index < 0)
 	return INVALID_MDD;
@@ -1024,7 +1024,7 @@ int fddl_forest::Value(level k, node_idx p, int *tup)
 	return p;
     if (p == 0)
 	return 0;
-    node *nodeP = &FDDL_NODE(k, p);
+    Node *nodeP = &FDDL_NODE(k, p);
 
     if (IS_SPARSE(nodeP)) {
 	for (arc_idx i = 0; i < nodeP->size; i++)
@@ -1057,7 +1057,7 @@ int fddl_forest::ChangeMaxVal(level k, int maxval)
 
     if (k > 0) {
 	for (node_idx i = 0; i < last[k]; i++) {
-	    node *nodeP = &FDDL_NODE(k, i);
+	    Node *nodeP = &FDDL_NODE(k, i);
 
 	    if (IS_SPARSE(nodeP)) {
 		for (int j = 0; j < nodeP->size; j++)
@@ -1080,7 +1080,7 @@ int fddl_forest::FindRange(level k)
 {
     int i;
     int maxVal;
-    node *nodeP;
+    Node *nodeP;
     maxVal = 0;
     for (i = 1; i < last[k]; i++) {
 	nodeP = &FDDL_NODE(k, i);
@@ -1096,7 +1096,7 @@ int fddl_forest::FindRange(level k)
 }
 
 //Bring level "kold" to the top of the MDD.
-int fddl_forest::Shift(mdd_handle h, level kold, mdd_handle & result)
+int fddl_forest::Shift(MDDHandle h, level kold, MDDHandle & result)
 {
     int temp;
     if (h.index < 0)
@@ -1127,7 +1127,7 @@ node_idx fddl_forest::InternalShift(level k, node_idx p, level target)
 {
     node_idx r;
     int maxVal;
-    node *nodeP;
+    Node *nodeP;
 
 
     if (p == 0)
@@ -1173,7 +1173,7 @@ node_idx fddl_forest::InternalShift(level k, node_idx p, level target)
 #ifndef NON_DEBUG
 	    printf("<%d,%d>[%d] = %d\n", k, p, i, j);
 #endif
-	    node *nodeJ = &FDDL_NODE(k - 1, j);
+	    Node *nodeJ = &FDDL_NODE(k - 1, j);
 	    if (val < nodeJ->size) {
 		n = FDDL_ARC(k - 1, nodeJ, val);
 #ifndef NON_DEBUG

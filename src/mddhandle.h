@@ -7,8 +7,8 @@
  * information.
  */
 
-#ifndef __MDDTYPES_H
-#define __MDDTYPES_H
+#ifndef __MDDHANDLE_H
+#define __MDDHANDLE_H
 
 #include <iostream>
 #include <assert.h>
@@ -19,7 +19,7 @@ typedef int level;		//Level of the MDD
 typedef int node_idx;		//Index of an MDD node in the dynamic node array for a particular level
 typedef int arc_idx;		//Index of an MDD arc in the dynamic arc array for a particular level
 
-class mdd_handle {
+class MDDHandle {
     friend class fddl_forest;
   protected:
 
@@ -27,20 +27,20 @@ class mdd_handle {
 
     int index;
 
-     mdd_handle() {
+     MDDHandle () {
 	index = -1;
-    } bool isEqual(mdd_handle & b) {
+    } bool isEqual(MDDHandle & b) {
 	return b.index == index;
     }
 
-    bool operator==(mdd_handle a) {
+    bool operator==(MDDHandle a) {
 	cout << "Error in handle for MDD " << a.index << ":\n";
 	cout <<
 	    "Error: Cannot compare MDD handles with `=='.  Use isEqual\n";
 	return false;
     }
 
-    mdd_handle operator=(mdd_handle a) {
+    MDDHandle operator=(MDDHandle a) {
 	cout << "Error:  Cannot assign MDD handles using =" << endl;
 	assert(0);
 	return a;
@@ -50,4 +50,4 @@ class mdd_handle {
 	index = newidx;
     }
 };
-#endif				//__MDDTYPES_H
+#endif//__MDDHANDLE_H

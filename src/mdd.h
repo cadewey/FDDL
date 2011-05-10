@@ -16,10 +16,9 @@
 #include <iostream>
 #include <assert.h>
 
-#include "mddtypes.h"
+#include "mddhandle.h"
 #include "caches.h"
 #include "dynarray.h"
-#include "uniquetable.h"
 
 using namespace std;
 
@@ -27,48 +26,22 @@ enum garbage_algorithm {O_LAZY=0, O_STRICT=2};
 enum flags {SHARED=1,SPARSE=2,DELETED=4,CHECKED_IN=8,SATURATED=16};
 enum mdd_op_return_val { SUCCESS = 0, TUPLE_OUT_OF_BOUNDS, INVALID_MDD, MAX_FAILED, MIN_FAILED, COMPLEMENT_FAILED, INVALID_LEVEL };
 
-class fddl_forest;
-extern fddl_forest *thisForest;
-
+class UniqueTable;
 
 struct label {
     int rule_num;
     label *next;
 };
 
-struct print_range {
-    int low;
-    int high;
-
-     print_range(int l, int h) {
-	low = l;
-	high = h;
-    } 
-     
-    void Print() {
-	if (low == high)
-	    cout << low;
-	else if (low == 0 && high == 255)
-	    cout << "*";
-	else
-	    cout << "[" << low << "-" << high << "]" << endl;
-    }
-
-};
-
-static unsigned int ExternalHashNode(level k, node_idx p);
-static int ExternalCompare(level k, node_idx p, node_idx q);
-
 //An MDD node consists of two parts, a node struct stored in a node
 //array, and a set of arcs stored in a per-level arc array.
-class node {
-  public:
+struct Node {
     char flags;			//Parameter flags (see above for values)
     int down;			//Index into the arc array of the first downpointer for this node
     int size;			//Number of arcs leaving this node.  If stored sparsely, 
     //the number of non zeros.
     int in;			//Number of incoming Arcs
-     node() {
+     Node() {
 	flags = 0;
 	down = -1;
 	size = 0;
@@ -188,14 +161,14 @@ class fddl_forest {
 
   public:
 
-    void ReallocHandle(mdd_handle & ref);
+    void ReallocHandle(MDDHandle& ref);
 
-    void Attach(mdd_handle & ref, node_idx i) {
+    void Attach(MDDHandle& ref, node_idx i) {
 	ref.index = i;
 	(*(*nodes[K])[i]).in++;
     } DynArray < node_idx > **node_remap_array;
 
-    DynArray < node > **nodes;	//An array [1..K] of heaps of MDD nodes.
+    DynArray < Node > **nodes;	//An array [1..K] of heaps of MDD nodes.
     DynArray < node_idx > **arcs;	//An array [1..K] of heaps of MDD arcs.
     DynArray < label * >**labels;	//An array [1..K] of labels for each arc.
 
@@ -203,107 +176,11 @@ class fddl_forest {
     //The domain of each level is specified as an integer range
     //from 0 to maxvals[k] inclusive.
 
-    unsigned int hashnode(level k, node_idx p);
-    int compare(level k, node_idx p, node_idx q);
+    unsigned int hashnode(const level k, const node_idx p) const;
+    int compare(const level k, const node_idx p, const node_idx q) const;
 
     fddl_forest(int numlevels, int *maxvals);
-
-    //Clean up data structures used by the forest
-    ~fddl_forest() {
-	for (level k = K; k > 0; k--) {
-	    if (nodes[k])
-		delete nodes[k];
-
-	    if (node_remap_array)
-		if (node_remap_array[k])
-		    delete node_remap_array[k];
-
-	    if (arcs[k])
-		delete arcs[k];
-
-	    if (labels[k])
-		delete labels[k];
-
-	    if (ProjectCache[k])
-		delete ProjectCache[k];
-
-	    if (PruneCache[k])
-		delete PruneCache[k];
-
-	    if (RestrictCache[k])
-		delete RestrictCache[k];
-
-	    if (MaxCache[k])
-		delete MaxCache[k];
-
-	    if (MinCache[k])
-		delete MinCache[k];
-
-	    if (ComplementCache[k])
-		delete ComplementCache[k];
-
-	    if (BComplementCache[k])
-		delete BComplementCache[k];
-
-	    if (ValRestrictCache[k])
-		delete ValRestrictCache[k];
-
-	    if (LessThanCache[k])
-		delete LessThanCache[k];
-
-	    if (ApplyCache[k])
-		delete ApplyCache[k];
-
-	    if (CombineCache[k])
-		delete CombineCache[k];
-
-	    if (ReplaceCache[k])
-		delete ReplaceCache[k];
-
-	    if (ProjectOntoCache[k])
-		delete ProjectOntoCache[k];
-
-	    if (ReplaceStrictCache[k])
-		delete ReplaceStrictCache[k];
-
-	    if (SelectCache[k])
-		delete SelectCache[k];
-
-	    if (ShiftCache[k])
-		delete ShiftCache[k];
-
-	    if (PrintCache[k])
-		delete PrintCache[k];
-	}
-
-	if (node_remap_array)
-	    delete[]node_remap_array;
-
-	delete[]ProjectCache;
-	delete[]PruneCache;
-	delete[]RestrictCache;
-	delete[]MaxCache;
-	delete[]MinCache;
-	delete[]ComplementCache;
-	delete[]BComplementCache;
-	delete[]ValRestrictCache;
-	delete[]ApplyCache;
-	delete[]LessThanCache;
-	delete[]CombineCache;
-	delete[]ReplaceCache;
-	delete[]ProjectOntoCache;
-	delete[]ReplaceStrictCache;
-	delete[]ShiftCache;
-	delete[]SelectCache;
-	delete[]PrintCache;
-	delete[]arcs;
-	delete[]labels;
-	delete[]nodes;
-	delete[]maxVals;
-	delete[]last;
-	delete[]tail;
-	delete UT;
-    }
+    ~fddl_forest();
 
     int Last(level k) {
 	return last[k];
@@ -312,41 +189,41 @@ class fddl_forest {
     int GetMaxVal(level k);
     int ChangeMaxVal(level k, int maxval);
 
-    int MakeMDDFromTuple(int *low, int *high, mdd_handle & ref);
-    int Assign(mdd_handle root, int *low, int *high, mdd_handle & result);
-    int DestroyMDD(mdd_handle mdd);
-    int IsElementOf(mdd_handle root, int *tup, bool & result);
-    int Value(mdd_handle root, int *tup, int &result);
+    int MakeMDDFromTuple(int *low, int *high, MDDHandle& ref);
+    int Assign(MDDHandle root, int *low, int *high, MDDHandle & result);
+    int DestroyMDD(MDDHandle mdd);
+    int IsElementOf(MDDHandle root, int *tup, bool & result);
+    int Value(MDDHandle root, int *tup, int &result);
 
-    int Max(mdd_handle p, mdd_handle q, mdd_handle & result);
-    int Min(mdd_handle p, mdd_handle q, mdd_handle & result);
-    int Complement(mdd_handle p, mdd_handle & result);
-    int BinaryComplement(mdd_handle p, mdd_handle & result);
-    int LessThan(mdd_handle p, int value, mdd_handle & result);
-    int Apply(mdd_handle * roots, int num_roots,
-	      node_idx(*func) (node_idx *, int), mdd_handle & result);
-    int ValRestrict(mdd_handle p, int value, mdd_handle & result);
-    int Combine(mdd_handle p, mdd_handle q, int cache_index,
-		mdd_handle & result);
-    int Select(mdd_handle p, int num_chains, mdd_handle * chains,
-	       mdd_handle & result);
+    int Max(MDDHandle p, MDDHandle q, MDDHandle & result);
+    int Min(MDDHandle p, MDDHandle q, MDDHandle & result);
+    int Complement(MDDHandle p, MDDHandle & result);
+    int BinaryComplement(MDDHandle p, MDDHandle & result);
+    int LessThan(MDDHandle p, int value, MDDHandle & result);
+    int Apply(MDDHandle * roots, int num_roots,
+	      node_idx(*func) (node_idx *, int), MDDHandle & result);
+    int ValRestrict(MDDHandle p, int value, MDDHandle & result);
+    int Combine(MDDHandle p, MDDHandle q, int cache_index,
+		MDDHandle & result);
+    int Select(MDDHandle p, int num_chains, MDDHandle * chains,
+	       MDDHandle & result);
 
-    int Shift(mdd_handle p, level kold, mdd_handle & result);
+    int Shift(MDDHandle p, level kold, MDDHandle & result);
 
-    int Replace(mdd_handle p, mdd_handle q, bool strict,
-		mdd_handle & result);
+    int Replace(MDDHandle p, MDDHandle q, bool strict,
+		MDDHandle & result);
 
-    int ProjectOnto(mdd_handle p, mdd_handle q, mdd_handle & result);
+    int ProjectOnto(MDDHandle p, MDDHandle q, MDDHandle & result);
 
-    void PrintVals(mdd_handle root, level k);
+    void PrintVals(MDDHandle root, level k);
     node_idx ProjectVals(level k, node_idx p, level cutoff);
     node_idx Projection(level k, node_idx p, level * mask);
     int InternalPrintVals(level k, node_idx p);
-    void PrintPort(mdd_handle root, level k);
-    void PrintRanges(mdd_handle root, level * mask);
+    void PrintPort(MDDHandle root, level k);
+    void PrintRanges(MDDHandle root, level * mask);
     void PrintRanges(level k, node_idx p, level * mask,
 		     print_node * &stack, int *low, int *high);
-    void PrintAddy(mdd_handle root, level k);
+    void PrintAddy(MDDHandle root, level k);
     void PrintAddy(level k, node_idx p, int *vals, int depth);
     void PrintStates(node_idx root);
     void PrintStates(level k, node_idx root, int *states);
@@ -359,7 +236,7 @@ class fddl_forest {
 
     void ToggleSparsity(bool SparseSwitch);
     void SetGarbageCollection(int alg, int threshold);
-    void PruneMDD(mdd_handle p);
+    void PruneMDD(MDDHandle p);
     void PruneMDD(node_idx p);
     void PrintMDD();
     void PrintMDD(int top, int bottom);
@@ -420,52 +297,52 @@ class fddl_forest {
     void SaveMDD(char *filename);
     void LoadMDD(char *filename);
 
-    inline node& FDDL_NODE(level k, node_idx p) const
+    inline Node& FDDL_NODE(level k, node_idx p) const
     {
 	    return *((*nodes[k])[p]);
     }
 
-    inline node_idx& FULL_ARC(level k, node* n, arc_idx i) const
+    inline node_idx& FULL_ARC(level k, Node* n, arc_idx i) const
     {
 	return *((*arcs[k])[n->down + i]);
     }
 
-    inline label* FULL_LABEL(level k, node* n, arc_idx i) const
+    inline label* FULL_LABEL(level k, Node* n, arc_idx i) const
     {
 	return *((*labels[k])[n->down + i]);
     } 
 
-    inline arc_idx& SPARSE_INDEX(level k, node* n, arc_idx i) const
+    inline arc_idx& SPARSE_INDEX(level k, Node* n, arc_idx i) const
     {
 	return *((*arcs[k])[n->down + 2 * i]);
     }
     
-    inline node_idx& SPARSE_ARC(level k, node* n, arc_idx i) const
+    inline node_idx& SPARSE_ARC(level k, Node* n, arc_idx i) const
     {
 	return *((*arcs[k])[n->down + 2 * i + 1]);
     }
 
-    inline label* LABEL_INDEX(level k, node* n, arc_idx i) const
+    inline label* LABEL_INDEX(level k, Node* n, arc_idx i) const
     {
 	return *((*labels[k])[n->down + 2 * i]);
     }
 
-    inline label* SPARSE_LABEL(level k, node* n, arc_idx i) const
+    inline label* SPARSE_LABEL(level k, Node* n, arc_idx i) const
     {
 	return *((*labels[k])[n->down + 2 * i + 1]);
     }
 
-   inline bool IS_SPARSE(const node* const n) const
+   inline bool IS_SPARSE(const Node* const n) const
    {
 	return (n->flags & SPARSE) > 0;
    }
 
-   inline bool IS_DELETED(const node* const n) const
+   inline bool IS_DELETED(const Node* const n) const
    {
 	return (n->flags & DELETED) > 0;
    }
 
-   inline node_idx& FDDL_ARC(level k, node* n, arc_idx i) const
+   inline node_idx& FDDL_ARC(level k, Node* n, arc_idx i) const
    {
 	return IS_SPARSE(n) ? SPARSE_ARC(k,n,i) : FULL_ARC(k,n,i);
    }
