@@ -8,50 +8,46 @@
  */
 
 #ifndef __MDDTYPES_H
-#define __MDDTYPES_H 
+#define __MDDTYPES_H
 
 #include <iostream>
 #include <assert.h>
 
 using namespace std;
 
-typedef int level;			//Level of the MDD
-typedef int node_idx;			//Index of an MDD node in the dynamic node array for a particular level
-typedef int arc_idx;			//Index of an MDD arc in the dynamic arc array for a particular level
+typedef int level;		//Level of the MDD
+typedef int node_idx;		//Index of an MDD node in the dynamic node array for a particular level
+typedef int arc_idx;		//Index of an MDD arc in the dynamic arc array for a particular level
 
-class   mdd_handle {
-	friend class fddl_forest;
- protected:
+class mdd_handle {
+    friend class fddl_forest;
+  protected:
 
- public:
+  public:
 
-   int     index;
+    int index;
 
-   mdd_handle() {
-      index = -1;
-   } 
-   bool  
-   isEqual(mdd_handle & b) 
-   {
-      return b.index == index;
-   }
+     mdd_handle() {
+	index = -1;
+    } bool isEqual(mdd_handle & b) {
+	return b.index == index;
+    }
 
-   bool operator==(mdd_handle a) 
-   {
-      cout << "Error in handle for MDD " << a.index << ":\n";
-      cout << "Error: Cannot compare MDD handles with `=='.  Use isEqual\n";
-      return false;
-   }
-   
-   mdd_handle operator=(mdd_handle a) 
-   {
-      cout << "Error:  Cannot assign MDD handles using =" << endl;
-      assert(0);
-      return a;
-   }
+    bool operator==(mdd_handle a) {
+	cout << "Error in handle for MDD " << a.index << ":\n";
+	cout <<
+	    "Error: Cannot compare MDD handles with `=='.  Use isEqual\n";
+	return false;
+    }
 
-   void RemapHandle(node_idx newidx) {
-      index = newidx;
-   }
+    mdd_handle operator=(mdd_handle a) {
+	cout << "Error:  Cannot assign MDD handles using =" << endl;
+	assert(0);
+	return a;
+    }
+
+    void RemapHandle(node_idx newidx) {
+	index = newidx;
+    }
 };
-#endif //__MDDTYPES_H 
+#endif				//__MDDTYPES_H

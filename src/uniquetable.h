@@ -14,54 +14,54 @@
 #   include "dynarray.h"
 
 #   define TABLE_SIZE 1009
-class   uniquetable {
+class uniquetable {
 
-	unsigned int (*hashfunc) (level, node_idx);
-	int     (*compare) (level, node_idx, node_idx);
-	class   table_node {
-	 public:
-		level   k;
-		node_idx p;
-		table_node *next;
-		        table_node() {
-			next = NULL;
-	}};
+    unsigned int (*hashfunc) (level, node_idx);
+    int (*compare) (level, node_idx, node_idx);
+    class table_node {
+      public:
+	level k;
+	node_idx p;
+	table_node *next;
+	 table_node() {
+	    next = NULL;
+    }};
 
-	table_node ***table;
-	int     numlevels;
+    table_node ***table;
+    int numlevels;
 
- public:
-	uniquetable(int K, unsigned int (*h) (level, node_idx),
-					int (*c) (level, node_idx, node_idx)) {
-		numlevels = K + 1;
-		table = new table_node **[numlevels];
-		for (int i = 0; i < numlevels; i++) {
-			table[i] = new table_node *[TABLE_SIZE];
-			for (int j = 0; j < TABLE_SIZE; j++) {
-				table[i][j] = NULL;
-			}
-		}
-		hashfunc = h;
-		compare = c;
+  public:
+    uniquetable(int K, unsigned int (*h) (level, node_idx),
+		int (*c) (level, node_idx, node_idx)) {
+	numlevels = K + 1;
+	table = new table_node **[numlevels];
+	for (int i = 0; i < numlevels; i++) {
+	    table[i] = new table_node *[TABLE_SIZE];
+	    for (int j = 0; j < TABLE_SIZE; j++) {
+		table[i][j] = NULL;
+	    }
 	}
-	~uniquetable() {
-		table_node *cur;
+	hashfunc = h;
+	compare = c;
+    }
+    ~uniquetable() {
+	table_node *cur;
 
-		for (int i = 0; i < numlevels; i++) {
-			for (int j = 0; j < TABLE_SIZE; j++) {
-				while (table[i][j] != NULL) {
-					cur = table[i][j];
-					table[i][j] = cur->next;
-					delete  cur;
-				}
-			}
-			delete[]table[i];
+	for (int i = 0; i < numlevels; i++) {
+	    for (int j = 0; j < TABLE_SIZE; j++) {
+		while (table[i][j] != NULL) {
+		    cur = table[i][j];
+		    table[i][j] = cur->next;
+		    delete cur;
 		}
-		delete[]table;
+	    }
+	    delete[]table[i];
 	}
-	int     LookUp(level k, node_idx p);
-	int     Add(level k, node_idx p);
-	int     Delete(level k, node_idx p);
-	int     Remap(level k, Dynarray < node_idx >*transTable);
+	delete[]table;
+    }
+    int LookUp(level k, node_idx p);
+    int Add(level k, node_idx p);
+    int Delete(level k, node_idx p);
+    int Remap(level k, Dynarray < node_idx > *transTable);
 };
 #endif
