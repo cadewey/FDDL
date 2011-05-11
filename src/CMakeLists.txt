@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-set (FDDL_Sources api.cc caches.cc mdd.cc uniquetable.cc)
+set (FDDL_Sources api.cpp caches.cpp mdd.cpp uniquetable.cpp)
 add_library(FDDL ${FDDL_Sources})
 
 install (TARGETS FDDL DESTINATION lib)
