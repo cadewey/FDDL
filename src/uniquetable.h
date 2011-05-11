@@ -12,34 +12,31 @@
 
 #include "mddhandle.h"
 
-template <class T> class DynArray;
-class fddl_forest;
+template < class T > class DynArray;
+class Forest;
 
 const unsigned int TABLE_SIZE = 1009;
 
-typedef unsigned int (*hfunc)(level, node_idx);
-typedef int (*cfunc)(level, node_idx, node_idx);
-
 class UniqueTable {
-	private:
-		const fddl_forest* const m_forest;
-		struct table_node {
-			level k;
-			node_idx p;
-			table_node *next;
-			table_node() {
-			    next = NULL;
-		        }
-		    };
-		table_node ***m_table;
-		unsigned int m_numlevels;
+ private:
+	const Forest *const m_forest;
+	struct TableNode {
+		level k;
+		node_idx p;
+		TableNode *next;
+		TableNode() {
+			next = NULL;
+	        }
+        };
+	TableNode ***m_table;
+	unsigned int m_numlevels;
 
-  public:
-    UniqueTable(const int K, const fddl_forest* const forest);
-    ~UniqueTable();
-    int look_up(const level k, const node_idx p) const;
-    int add(const level k, const node_idx p);
-    int remove(const level k, const node_idx p);
-    int remap(const level k, DynArray < node_idx > * const transTable);
+ public:
+	UniqueTable(const int K, const Forest * const forest);
+	~UniqueTable();
+	int look_up(const level k, const node_idx p) const;
+	int add(const level k, const node_idx p);
+	int remove(const level k, const node_idx p);
+	int remap(const level k, DynArray < node_idx > *const transTable);
 };
-#endif //__UNIQUE_TABLE_H
+#endif				//__UNIQUE_TABLE_H
