@@ -19,7 +19,8 @@
 #include "mddtypes.h"
 #include "caches.h"
 #include "dynarray.h"
-#include "uniquetable.h"
+
+class UniqueTable;
 
 using namespace std;
 
@@ -30,34 +31,10 @@ enum mdd_op_return_val { SUCCESS = 0, TUPLE_OUT_OF_BOUNDS, INVALID_MDD, MAX_FAIL
 class fddl_forest;
 extern fddl_forest *thisForest;
 
-
 struct label {
     int rule_num;
     label *next;
 };
-
-struct print_range {
-    int low;
-    int high;
-
-     print_range(int l, int h) {
-	low = l;
-	high = h;
-    } 
-     
-    void Print() {
-	if (low == high)
-	    cout << low;
-	else if (low == 0 && high == 255)
-	    cout << "*";
-	else
-	    cout << "[" << low << "-" << high << "]" << endl;
-    }
-
-};
-
-static unsigned int ExternalHashNode(level k, node_idx p);
-static int ExternalCompare(level k, node_idx p, node_idx q);
 
 //An MDD node consists of two parts, a node struct stored in a node
 //array, and a set of arcs stored in a per-level arc array.
@@ -203,107 +180,11 @@ class fddl_forest {
     //The domain of each level is specified as an integer range
     //from 0 to maxvals[k] inclusive.
 
-    unsigned int hashnode(level k, node_idx p);
-    int compare(level k, node_idx p, node_idx q);
+    unsigned int hashnode(level k, node_idx p) const;
+    int compare(level k, node_idx p, node_idx q) const;
 
     fddl_forest(int numlevels, int *maxvals);
-
-    //Clean up data structures used by the forest
-    ~fddl_forest() {
-	for (level k = K; k > 0; k--) {
-	    if (nodes[k])
-		delete nodes[k];
-
-	    if (node_remap_array)
-		if (node_remap_array[k])
-		    delete node_remap_array[k];
-
-	    if (arcs[k])
-		delete arcs[k];
-
-	    if (labels[k])
-		delete labels[k];
-
-	    if (ProjectCache[k])
-		delete ProjectCache[k];
-
-	    if (PruneCache[k])
-		delete PruneCache[k];
-
-	    if (RestrictCache[k])
-		delete RestrictCache[k];
-
-	    if (MaxCache[k])
-		delete MaxCache[k];
-
-	    if (MinCache[k])
-		delete MinCache[k];
-
-	    if (ComplementCache[k])
-		delete ComplementCache[k];
-
-	    if (BComplementCache[k])
-		delete BComplementCache[k];
-
-	    if (ValRestrictCache[k])
-		delete ValRestrictCache[k];
-
-	    if (LessThanCache[k])
-		delete LessThanCache[k];
-
-	    if (ApplyCache[k])
-		delete ApplyCache[k];
-
-	    if (CombineCache[k])
-		delete CombineCache[k];
-
-	    if (ReplaceCache[k])
-		delete ReplaceCache[k];
-
-	    if (ProjectOntoCache[k])
-		delete ProjectOntoCache[k];
-
-	    if (ReplaceStrictCache[k])
-		delete ReplaceStrictCache[k];
-
-	    if (SelectCache[k])
-		delete SelectCache[k];
-
-	    if (ShiftCache[k])
-		delete ShiftCache[k];
-
-	    if (PrintCache[k])
-		delete PrintCache[k];
-	}
-
-	if (node_remap_array)
-	    delete[]node_remap_array;
-
-	delete[]ProjectCache;
-	delete[]PruneCache;
-	delete[]RestrictCache;
-	delete[]MaxCache;
-	delete[]MinCache;
-	delete[]ComplementCache;
-	delete[]BComplementCache;
-	delete[]ValRestrictCache;
-	delete[]ApplyCache;
-	delete[]LessThanCache;
-	delete[]CombineCache;
-	delete[]ReplaceCache;
-	delete[]ProjectOntoCache;
-	delete[]ReplaceStrictCache;
-	delete[]ShiftCache;
-	delete[]SelectCache;
-	delete[]PrintCache;
-	delete[]arcs;
-	delete[]labels;
-	delete[]nodes;
-	delete[]maxVals;
-	delete[]last;
-	delete[]tail;
-	delete UT;
-    }
+    ~fddl_forest();
 
     int Last(level k) {
 	return last[k];

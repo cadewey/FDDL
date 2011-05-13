@@ -11,7 +11,7 @@
 #include "dynarray.h"
 
 
-UniqueTable::UniqueTable(int K, hfunc h, cfunc c) : m_numlevels(K + 1), m_hashfunc(h), m_compare(c)
+UniqueTable::UniqueTable(const int K, const fddl_forest* const forest) : m_numlevels(K + 1), m_forest(forest)
 {
     m_table = new table_node **[m_numlevels];
     for (unsigned int i = 0; i < m_numlevels; i++) {
@@ -39,15 +39,15 @@ UniqueTable::~UniqueTable()
     delete[]m_table;
 }
 
-node_idx UniqueTable::look_up(level k, node_idx p)
+node_idx UniqueTable::look_up(const level k, const node_idx p)
 {
     table_node *cur;
     unsigned int idx;
 
-    idx = m_hashfunc(k, p) % TABLE_SIZE;
+    idx = m_forest->hashnode(k, p) % TABLE_SIZE;
     cur = m_table[k][idx];
     while (cur != NULL) {
-	if (m_compare(k, p, cur->p) == 1) {
+	if (m_forest->compare(k, p, cur->p) == 1) {
 	    return cur->p;
 	}
 	cur = cur->next;
@@ -55,7 +55,7 @@ node_idx UniqueTable::look_up(level k, node_idx p)
     return -1;
 }
 
-node_idx UniqueTable::add(level k, node_idx p)
+node_idx UniqueTable::add(const level k, const node_idx p)
 {
     node_idx r;
     table_node *newNode;
@@ -65,7 +65,7 @@ node_idx UniqueTable::add(level k, node_idx p)
     if (r != -1)
 	return r;
 
-    idx = m_hashfunc(k, p) % TABLE_SIZE;
+    idx = m_forest->hashnode(k, p) % TABLE_SIZE;
 
     newNode = new table_node;
     newNode->k = k;
@@ -75,19 +75,19 @@ node_idx UniqueTable::add(level k, node_idx p)
     return p;
 }
 
-int UniqueTable::remove(level k, node_idx p)
+int UniqueTable::remove(const level k, const node_idx p)
 {
     table_node *cur;
     table_node *prev;
     unsigned int idx;
 
-    idx = m_hashfunc(k, p) % TABLE_SIZE;
+    idx = m_forest->hashnode(k, p) % TABLE_SIZE;
 
     prev = NULL;
     cur = m_table[k][idx];
 
     while (cur != NULL) {
-	if (m_compare(k, p, cur->p) == 1) {
+	if (m_forest->compare(k, p, cur->p) == 1) {
 	    if (prev == NULL) {
 		m_table[k][idx] = cur->next;
 		delete cur;
@@ -103,7 +103,7 @@ int UniqueTable::remove(level k, node_idx p)
     return 0;
 }
 
-int UniqueTable::remap(level k, DynArray < node_idx > *transTable)
+int UniqueTable::remap(const level k, DynArray < node_idx > *const transTable)
 {
     int i;
     table_node *cur;

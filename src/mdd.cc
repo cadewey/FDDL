@@ -18,6 +18,8 @@
 #endif
 
 #include "mdd.h"
+#include "uniquetable.h"
+
 #include <stdio.h>
 
 int compactions;
@@ -122,13 +124,110 @@ fddl_forest::fddl_forest(int numlevels, int *maxvals)
     }
 
     //Create a hashtable of K levels to act as the Unique Table
-    UT = new UniqueTable(K, ExternalHashNode, ExternalCompare);
+    UT = new UniqueTable(K, thisForest);
     garbage_alg = O_LAZY;
     garbage_threshold = 1;
 }
 
+//Clean up data structures used by the forest
+fddl_forest::~fddl_forest() {
+	for (level k = K; k > 0; k--) {
+	    if (nodes[k])
+		delete nodes[k];
+
+	    if (node_remap_array)
+		if (node_remap_array[k])
+		    delete node_remap_array[k];
+
+	    if (arcs[k])
+		delete arcs[k];
+
+	    if (labels[k])
+		delete labels[k];
+
+	    if (ProjectCache[k])
+		delete ProjectCache[k];
+
+	    if (PruneCache[k])
+		delete PruneCache[k];
+
+	    if (RestrictCache[k])
+		delete RestrictCache[k];
+
+	    if (MaxCache[k])
+		delete MaxCache[k];
+
+	    if (MinCache[k])
+		delete MinCache[k];
+
+	    if (ComplementCache[k])
+		delete ComplementCache[k];
+
+	    if (BComplementCache[k])
+		delete BComplementCache[k];
+
+	    if (ValRestrictCache[k])
+		delete ValRestrictCache[k];
+
+	    if (LessThanCache[k])
+		delete LessThanCache[k];
+
+	    if (ApplyCache[k])
+		delete ApplyCache[k];
+
+	    if (CombineCache[k])
+		delete CombineCache[k];
+
+	    if (ReplaceCache[k])
+		delete ReplaceCache[k];
+
+	    if (ProjectOntoCache[k])
+		delete ProjectOntoCache[k];
+
+	    if (ReplaceStrictCache[k])
+		delete ReplaceStrictCache[k];
+
+	    if (SelectCache[k])
+		delete SelectCache[k];
+
+	    if (ShiftCache[k])
+		delete ShiftCache[k];
+
+	    if (PrintCache[k])
+		delete PrintCache[k];
+	}
+
+	if (node_remap_array)
+	    delete[]node_remap_array;
+
+	delete[]ProjectCache;
+	delete[]PruneCache;
+	delete[]RestrictCache;
+	delete[]MaxCache;
+	delete[]MinCache;
+	delete[]ComplementCache;
+	delete[]BComplementCache;
+	delete[]ValRestrictCache;
+	delete[]ApplyCache;
+	delete[]LessThanCache;
+	delete[]CombineCache;
+	delete[]ReplaceCache;
+	delete[]ProjectOntoCache;
+	delete[]ReplaceStrictCache;
+	delete[]ShiftCache;
+	delete[]SelectCache;
+	delete[]PrintCache;
+	delete[]arcs;
+	delete[]labels;
+	delete[]nodes;
+	delete[]maxVals;
+	delete[]last;
+	delete[]tail;
+	delete UT;
+}
+
 unsigned int
- fddl_forest::hashnode(level k, node_idx p)
+ fddl_forest::hashnode(level k, node_idx p) const
 {
     node *nodeP;
     unsigned int val;
@@ -145,7 +244,7 @@ unsigned int
     return val;
 }
 
-int fddl_forest::compare(level k, node_idx p, node_idx q)
+int fddl_forest::compare(level k, node_idx p, node_idx q) const
 {
     node *nodeP;
     node *nodeQ;
@@ -1508,12 +1607,12 @@ void fddl_forest::LoadMDD(char *filename)
 	for (node_idx i = 0; i < last[k]; i++) {
 	    node *nodeI = &FDDL_NODE(k, i);
 
-	    fscanf(inFile, "%d %d %d %d ", &nodeI->flags, &nodeI->in,
+	    fscanf(inFile, "%c %d %d %d ", &nodeI->flags, &nodeI->in,
 		   &nodeI->size, &nodeI->down);
 	}
 	fscanf(inFile, "\n");
 	for (arc_idx j = 0; j < tail[k]; j++) {
-	    fscanf(inFile, "%d ", &(*arcs[k])[j]);
+	    fscanf(inFile, "%d ", (*arcs[k])[j]);
 	}
 	fscanf(inFile, "\n");
     }
