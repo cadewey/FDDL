@@ -1,2 +1,8 @@
 ADD_EXECUTABLE(test_dynarray test_dynarray.cpp)
+ADD_EXECUTABLE(test_cache test_cache.cpp)
+ADD_EXECUTABLE(test_unaryop test_unaryop.cpp)
+ADD_EXECUTABLE(test_binaryop test_binaryop.cpp)
 TARGET_LINK_LIBRARIES(test_dynarray FDDL)
+TARGET_LINK_LIBRARIES(test_cache FDDL)
+TARGET_LINK_LIBRARIES(test_unaryop FDDL)
+TARGET_LINK_LIBRARIES(test_binaryop FDDL)
