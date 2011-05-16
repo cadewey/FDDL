@@ -17,7 +17,7 @@
 #include <assert.h>
 
 #include "mddhandle.h"
-#include "caches.h"
+#include "cache.h"
 #include "dynarray.h"
 
 class UniqueTable;

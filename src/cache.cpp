@@ -7,12 +7,12 @@
  * information.
  */
 
-#include "caches.h"
+#include "cache.h"
 
 Cache::Cache():m_size(INIT_SIZE)
 {
 	m_list = new CacheNode *[INIT_SIZE];
-	for (unsigned int i = 0; i < m_size; i++)
+	for (unsigned int i = 0; i < INIT_SIZE; i++)
 		m_list[i] = NULL;
 }
 
@@ -30,25 +30,24 @@ node_idx Cache::hit(const node_idx p, const node_idx q, const node_idx s) const 
 	idx = p;
 
 	if (q >= 0) {
-		idx = idx << 8 + q;
-		if (s >= 0) {
-			idx = idx << 8 + s;
-		}	
+		idx = (idx << 8) + q;
+	}
+	if (s >= 0) {
+		idx = (idx << 8) + s;
 	}
 
 	idx %= m_size;
 
 	cur = m_list[idx];
 	while (cur != NULL) {
-		if (cur->p == p && cur->q == q && cur->s)
+		if (cur->p == p && cur->q == q && cur->s == s)
 			return cur->r;
 		cur = cur->m_next;
 	}
 	return -1;
 }
 
-void Cache::add(const node_idx r, const node_idx p, const node_idx q,
-		const node_idx s)
+void Cache::add(const node_idx r, const node_idx p, const node_idx q, const node_idx s)
 {
 	unsigned int idx;
 
@@ -56,10 +55,10 @@ void Cache::add(const node_idx r, const node_idx p, const node_idx q,
 	idx = p;
 
 	if (q >= 0) {
-		idx = idx << 8 + q;
-		if (s >= 0) {
-			idx = idx << 8 + s;
-		}
+		idx = (idx << 8) + q;
+	}
+	if (s >= 0) {
+		idx = (idx << 8) + s;
 	}
 
 	idx %= m_size;

@@ -32,10 +32,8 @@ class Cache {
 	~Cache();
 
 	void clear();
-	node_idx hit(const node_idx p, const node_idx q =
-		     -1, const node_idx s = -1) const;
-	void add(const node_idx r, const node_idx p, const node_idx q =
-		 -1, const node_idx s = -1);
+	node_idx hit(const node_idx p, const node_idx q = -1, const node_idx s = -1) const;
+	void add(const node_idx r, const node_idx p, const node_idx q = -1, const node_idx s = -1);
 
  private:
 	CacheNode ** m_list;
