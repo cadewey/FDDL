@@ -7,9 +7,6 @@
  * information.
  */
 
-//#define FDDL_DEBUG
-//#define BRIEF_DEBUG
-
 #ifndef __MDD_H
 #define __MDD_H
 
@@ -25,7 +22,7 @@ class UniqueTable;
 using namespace std;
 
 enum garbage_algorithm { O_LAZY = 0, O_STRICT = 2 };
-enum flags { SHARED = 1, SPARSE = 2, DELETED = 4, CHECKED_IN = 8, SATURATED = 16 };
+enum flag { FLAG_NONE=0, FLAG_SHARED=1, FLAG_SPARSE=2, FLAG_DELETED=4, FLAG_CHECKED_IN=8};
 enum mdd_op_return_val { SUCCESS = 0, TUPLE_OUT_OF_BOUNDS, INVALID_MDD, MAX_FAILED, MIN_FAILED, COMPLEMENT_FAILED, INVALID_LEVEL };
 
 class UniqueTable;
@@ -38,13 +35,13 @@ struct Label {
 //An MDD node consists of two parts, a node struct stored in a node
 //array, and a set of arcs stored in a per-level arc array.
 struct Node {
-	char flags;		//Parameter flags (see above for values)
+	flag flags;		//Parameter flags (see above for values)
 	int down;		//Index into the arc array of the first downpointer for this node
 	int size;		//Number of arcs leaving this node.  If stored sparsely, 
 	//the number of non zeros.
 	int in;			//Number of incoming Arcs
 	 Node() {
-		flags = 0;
+		flags = FLAG_NONE;
 		down = -1;
 		size = 0;
 		in = 0;
@@ -337,11 +334,11 @@ class Forest {
 	} 
 	
 	inline bool IS_SPARSE(const Node * const n)const {
-		return (n->flags & SPARSE) > 0;
+		return (n->flags & FLAG_SPARSE) > 0;
 	} 
 	
 	inline bool IS_DELETED(const Node * const n)const {
-		return (n->flags & DELETED) > 0;
+		return (n->flags & FLAG_DELETED) > 0;
 	} 
 	
 	inline node_idx & FDDL_ARC(level k, Node * n, arc_idx i) const {

@@ -29,7 +29,6 @@ static float numSolutions;
 Forest::Forest(int numlevels, int *maxvals)
 {
     CompactCounter = 0;
-    node_remap_array = NULL;
     sparseEnabled = true;
     K = numlevels - 1;
     maxVals = new int[K + 1];
@@ -62,10 +61,6 @@ Forest::Forest(int numlevels, int *maxvals)
     }
 
     //Initialize caches for common operations
-    node_remap_array = new DynArray < node_idx > *[K + 1];
-
-    for (level k = K; k > 0; k--)
-	node_remap_array[k] = NULL;
 
     MaxCache = new Cache *[K + 1];
     ProjectCache = new Cache *[K + 1];
@@ -88,7 +83,7 @@ Forest::Forest(int numlevels, int *maxvals)
     for (int k = 1; k <= K; k++) {
 	FDDL_NODE(k, 0).in = 0;
 	FDDL_NODE(k, 0).size = 0;
-	FDDL_NODE(k, 0).flags = 0;
+	FDDL_NODE(k, 0).flags = FLAG_NONE;
 	FDDL_NODE(k, 0).down = 0;
 	ProjectCache[k] = new Cache;
 	PruneCache[k] = new Cache;
@@ -120,10 +115,6 @@ Forest::~Forest()
     for (level k = K; k > 0; k--) {
 	if (nodes[k])
 	    delete nodes[k];
-
-	if (node_remap_array)
-	    if (node_remap_array[k])
-		delete node_remap_array[k];
 
 	if (arcs[k])
 	    delete arcs[k];
@@ -182,9 +173,6 @@ Forest::~Forest()
 	if (PrintCache[k])
 	    delete PrintCache[k];
     }
-
-    if (node_remap_array)
-	delete[]node_remap_array;
 
     delete[]ProjectCache;
     delete[]PruneCache;
@@ -278,7 +266,7 @@ node_idx Forest::InternalMax(level k, node_idx p, node_idx q)
 
     result = MaxCache[k]->hit(p, q);
     if (result >= 0) {
-	if (!(FDDL_NODE(k, result).flags & DELETED))
+	if (!(FDDL_NODE(k, result).flags & FLAG_DELETED))
 	    return result;
 	if (garbage_alg != O_STRICT)
 	    return CheckIn(k, result);
@@ -391,7 +379,7 @@ node_idx Forest::InternalMax(level k, node_idx p, node_idx q)
     node_idx newresult = CheckIn(k, result);
 
 //  if (k > 0 && newresult)
-//    FDDL_NODE (k, newresult).flags |= CHECKED_IN;
+//    FDDL_NODE (k, newresult).flags |= FLAG_CHECKED_IN;
     MaxCache[k]->add(newresult, p, q);
     MaxCache[k]->add(newresult, q, p);
     MaxCache[k]->add(newresult, p, newresult);
@@ -414,7 +402,7 @@ node_idx Forest::InternalRestrict(level k, node_idx p, node_idx q)
 
     result = RestrictCache[k]->hit(p, q);
     if (result >= 0) {
-	if (!(FDDL_NODE(k, result).flags & DELETED))
+	if (!(FDDL_NODE(k, result).flags & FLAG_DELETED))
 	    return result;
 	if (garbage_alg != O_STRICT)
 	    return CheckIn(k, result);
@@ -531,7 +519,7 @@ node_idx Forest::InternalRestrict(level k, node_idx p, node_idx q)
     node_idx newresult = CheckIn(k, result);
 
 //  if (k > 0 && newresult)
-//    FDDL_NODE (k, newresult).flags |= CHECKED_IN;
+//    FDDL_NODE (k, newresult).flags |= FLAG_CHECKED_IN;
     RestrictCache[k]->add(newresult, p, q);
     return newresult;
 }
@@ -548,7 +536,7 @@ node_idx Forest::CheckIn(level k, node_idx p)
     nodeP = &FDDL_NODE(k, p);
     //are sparse.
     if (nodeP->size == 0) {
-	assert(!(nodeP->flags & CHECKED_IN));
+	assert(!(nodeP->flags & FLAG_CHECKED_IN));
 	DeleteNode(k, p);
 	//If the node is a dummy (has size 0), it must be a just created
 	//node, so it appears at the end of the node array for this level.
@@ -557,7 +545,7 @@ node_idx Forest::CheckIn(level k, node_idx p)
 	last[k]--;
 	return 0;
     }
-    assert(!(nodeP->flags & SPARSE));
+    assert(!(nodeP->flags & FLAG_SPARSE));
     if (sparseEnabled) {
 	//Count the number of non zeros to see if we should store
 	//in sparse format.
@@ -583,7 +571,7 @@ node_idx Forest::CheckIn(level k, node_idx p)
 		}
 	    }
 	    assert(current == nnz);
-	    nodeP->flags |= SPARSE;
+	    nodeP->flags = (flag)(nodeP->flags | FLAG_SPARSE);
 	    for (arc_idx i = 0; i < nnz; i++) {
 		SPARSE_INDEX(k, nodeP, i) = tempArray[2 * i];
 		SPARSE_ARC(k, nodeP, i) = tempArray[2 * i + 1];
@@ -605,8 +593,8 @@ node_idx Forest::CheckIn(level k, node_idx p)
     nodeQ = &FDDL_NODE(k, q);
 
     if (q != p) {
-	if (nodeP->flags & CHECKED_IN && !(nodeQ->flags & CHECKED_IN))
-	    nodeQ->flags |= CHECKED_IN;
+	if (nodeP->flags & FLAG_CHECKED_IN && !(nodeQ->flags & FLAG_CHECKED_IN))
+	    nodeQ->flags = (flag)(nodeQ->flags | FLAG_CHECKED_IN);
 
 	for (int i = 0; i < nodeP->size; i++)
 	    SetArc(k, p, i, 0);
@@ -617,13 +605,13 @@ node_idx Forest::CheckIn(level k, node_idx p)
 
 	DeleteNode(k, p);
 
-	if (nodeP->flags & CHECKED_IN) {	//Deleted Node is no longer checked in (we've scrambled the arcs!).
-	    nodeP->flags -= CHECKED_IN;
+	if (nodeP->flags & FLAG_CHECKED_IN) {	//Deleted Node is no longer checked in (we've scrambled the arcs!).
+	    nodeP->flags = (flag)(nodeP->flags - FLAG_CHECKED_IN);
 	}
 	last[k]--;
     }
-    if (nodeQ->flags & DELETED) {
-	nodeQ->flags -= DELETED;
+    if (nodeQ->flags & FLAG_DELETED) {
+	nodeQ->flags = (flag)(nodeQ->flags - FLAG_DELETED);
 	numnodes++;
     }
     assert(nodeQ->size > 0);
@@ -635,18 +623,12 @@ node_idx Forest::CheckIn(level k, node_idx p)
 
 node_idx Forest::NewNode(level k)
 {
-    /*
-     * if (node_remap_array[K])
-     * delete node_remap_array[K];
-     * node_remap_array[K] = new DynArray < node_idx > (0);
-     * (*(*node_remap_array[K])[0]) = 0;
-     */
     Node *nodeP;
 
     nodeP = &FDDL_NODE(k, last[k]);
     nodeP->down = tail[k];
     nodeP->size = 0;
-    nodeP->flags = 0;
+    nodeP->flags = FLAG_NONE;
     last[k]++;
 
     numnodes++;
@@ -668,13 +650,13 @@ void Forest::DeleteNode(level k, node_idx p)
 
     nodeP = &FDDL_NODE(k, p);
 
-    if (nodeP->flags & DELETED)	//If already deleted, return.
+    if (nodeP->flags & FLAG_DELETED)	//If already deleted, return.
 	return;
 
     assert(nodeP->in == 0);	//Only delete disconnected nodes!
 
     numnodes--;
-    nodeP->flags |= DELETED;
+    nodeP->flags = (flag)(nodeP->flags | FLAG_DELETED);
 }
 
 void Forest::DeleteDownstream(level k, node_idx p)
@@ -683,10 +665,10 @@ void Forest::DeleteDownstream(level k, node_idx p)
 	return;
     Node *nodeP = &FDDL_NODE(k, p);
 
-    if (nodeP->flags & DELETED)
+    if (nodeP->flags & FLAG_DELETED)
 	return;
     numnodes--;
-    nodeP->flags |= DELETED;
+    nodeP->flags = (flag)(nodeP->flags | FLAG_DELETED);
     UT->remove(k, p);
     for (int i = 0; i < nodeP->size; i++) {
 	SetArc(k, p, i, 0);
@@ -709,18 +691,16 @@ void Forest::CompactTopLevel()
     printf("Compact Top Level\n");
 #endif
 
-    //node_remap_array[K] = new DynArray <node_idx> (0);
     for (i = 1; i < last[K]; i++)
 	UT->remove(K, i);
     for (i = 1; i < last[K]; i++) {	//Scan throught the NODE list (except node 0)
 	Node *nodeI = &FDDL_NODE(K, i);
 
-	//(*(*node_remap_array[K])[i]) = i;
 	if (!IS_DELETED(nodeI)) {	//If it's not deleted,
 	    //Copy (and compact) the arcs.
 	    int newdown = tail[K];
 
-	    if (nodeI->flags & SPARSE) {	//If it's sparse, compact
+	    if (nodeI->flags & FLAG_SPARSE) {	//If it's sparse, compact
 		for (j = 0; j < nodeI->size; j++) {	//its arcs this way.
 		    (*(*arc_temp_array)[tail[K]]) =
 			SPARSE_INDEX(K, nodeI, j);
@@ -773,15 +753,9 @@ void Forest::Compact(level k)
     DynArray < Node > *node_temp_array;
     node_temp_array = new DynArray < Node >;	//Store the nodes here
 
-    //Store a mapping of old->new of 
-    //node indices so that we can re-hash
-    //and also update the level above.   
-    if (node_remap_array[k]) {
-	delete node_remap_array[k];
-
-	node_remap_array[k] = NULL;
-    }
-    node_remap_array[k] = new DynArray < node_idx > (0);
+    //Store a mapping of old->new of node indices so that we can re-hash and also update the level above.   
+    
+    DynArray<node_idx> *node_remap_array = new DynArray < node_idx > (0);
 
     node_idx i;
     arc_idx j;
@@ -790,23 +764,23 @@ void Forest::Compact(level k)
     tail[k] = 0;		//Clear the arc array
 
     int numvalidnodes = 1;	//Start at 1, because 0 is valid
+    (*(*node_remap_array)[0]) = 0;
 
-    (*(*node_remap_array[k])[0]) = 0;
     for (i = 1; i < last[k]; i++) {	//Scan throught the NODE list (except node 0)
 	Node *nodeI = &FDDL_NODE(k, i);
 
 	//If it's not deleted, copy it.
 //      if (nodeI->in > 0)
-	if (!(nodeI->flags & DELETED)) {
+	if (!(nodeI->flags & FLAG_DELETED)) {
 	    //Save the "old" idx of the node
 	    //into a temp array.  
-	    (*(*node_remap_array[k])[i]) = numvalidnodes;
+	    (*(*node_remap_array)[i]) = numvalidnodes;
 	    (*(*node_temp_array)[numvalidnodes]) = (*nodeI);
 
 	    //Copy (and compact) the arcs, too.
 	    int newdown = tail[k];
 
-	    if (nodeI->flags & SPARSE) {
+	    if (nodeI->flags & FLAG_SPARSE) {
 		//If it's sparse, compact
 		//its arcs this way.
 		for (j = 0; j < nodeI->size; j++) {
@@ -826,10 +800,10 @@ void Forest::Compact(level k)
 	    numvalidnodes++;
 	} else {		//If it IS deleted, "DeleteDownstream" it.
 	    UT->remove(k, i);
-	    assert(nodeI->flags & DELETED);
+	    assert(nodeI->flags & FLAG_DELETED);
 	    if (k >= 2) {
 		for (j = 0; j < nodeI->size; j++) {
-		    if (nodeI->flags & SPARSE)
+		    if (nodeI->flags & FLAG_SPARSE)
 			arc = SPARSE_ARC(k, nodeI, j);
 		    else
 			arc = FULL_ARC(k, nodeI, j);
@@ -846,7 +820,7 @@ void Forest::Compact(level k)
 
     nodes[k] = node_temp_array;
 
-    UT->remap(k, node_remap_array[k]);	//Update all the unique table entries
+    UT->remap(k, node_remap_array);	//Update all the unique table entries
 
     delete arcs[k];
 
@@ -856,19 +830,19 @@ void Forest::Compact(level k)
 	Node *nodeI = &FDDL_NODE(k + 1, i);
 
 	if (!IS_DELETED(nodeI)) {
-	    if (nodeI->flags & SPARSE) {
+	    if (nodeI->flags & FLAG_SPARSE) {
 		for (j = 0; j < nodeI->size; j++) {
-		    assert((*(*node_remap_array[k])
+		    assert((*(*node_remap_array)
 			    [SPARSE_ARC(k + 1, nodeI, j)]) >= 0);
-		    SPARSE_ARC(k + 1, nodeI, j) = (*(*node_remap_array[k])
+		    SPARSE_ARC(k + 1, nodeI, j) = (*(*node_remap_array)
 						   [SPARSE_ARC
 						    (k + 1, nodeI, j)]);
 		}
 	    } else {
 		for (j = 0; j < nodeI->size; j++) {
-		    assert((*(*node_remap_array[k])
+		    assert((*(*node_remap_array)
 			    [FULL_ARC(k + 1, nodeI, j)]) >= 0);
-		    FULL_ARC(k + 1, nodeI, j) = (*(*node_remap_array[k])
+		    FULL_ARC(k + 1, nodeI, j) = (*(*node_remap_array)
 						 [FULL_ARC
 						  (k + 1, nodeI, j)]);
 		}
@@ -881,13 +855,14 @@ void Forest::Compact(level k)
     for (i = 1; i < last[k + 1]; i++) {
 	Node *nodeI = &FDDL_NODE(k + 1, i);
 
-	if ((nodeI->flags & CHECKED_IN) && !IS_DELETED(nodeI)) {
+	if ((nodeI->flags & FLAG_CHECKED_IN) && !IS_DELETED(nodeI)) {
 	    int s = UT->add(k + 1, i);
 	    //@@@DEBUG: Removed for testing. @@@//
 	    assert(s == i);
 	}
     }
     FlushCaches(k);
+    delete node_remap_array;
 }
 
 //Flush all caches associated with level k.
@@ -919,7 +894,7 @@ void Forest::SetArc(level k, node_idx p, arc_idx i, node_idx j)
     if (i >= nodeP->size)
 	old = 0;
     else {
-	if (nodeP->flags & SPARSE)
+	if (nodeP->flags & FLAG_SPARSE)
 	    old = SPARSE_ARC(k, nodeP, i);
 	else
 	    old = FULL_ARC(k, nodeP, i);
@@ -932,7 +907,7 @@ void Forest::SetArc(level k, node_idx p, arc_idx i, node_idx j)
 	nodeOld->in--;
     }
     if (i >= nodeP->size) {	//If we're extending a node (in place)
-	assert(!(nodeP->flags & SPARSE));	//Sparse nodes should 
+	assert(!(nodeP->flags & FLAG_SPARSE));	//Sparse nodes should 
 	//never be extended. 
 
 	for (arc_to_clear = nodeP->size; arc_to_clear < i; arc_to_clear++) {
@@ -951,7 +926,7 @@ void Forest::SetArc(level k, node_idx p, arc_idx i, node_idx j)
 	nodeJ->in++;
     }
     //Set the arc
-    if (nodeP->flags & SPARSE)
+    if (nodeP->flags & FLAG_SPARSE)
 	(*(*arcs[k])[nodeP->down + 2 * i + 1]) = j;
     else
 	(*(*arcs[k])[nodeP->down + i]) = j;
@@ -1023,17 +998,17 @@ void Forest::PrintVals(MDDHandle root, level k)
 	    Node *child;
 
 	    child = &FDDL_NODE(k1, i);
-	    if (child->flags & SHARED)
-		child->flags -= SHARED;
+	    if (child->flags & FLAG_SHARED)
+		child->flags = (flag)(child->flags - FLAG_SHARED);
 	}
     }
     InternalPrintVals(k, root.index);	//Mark all nodes in Query
     for (int i = 0; i < last[k]; i++) {
 	Node *nodeP = &FDDL_NODE(k, i);
 
-	if (nodeP->flags & SHARED) {
+	if (nodeP->flags & FLAG_SHARED) {
 	    for (int j = 0; j < nodeP->size; j++) {
-		if (FDDL_NODE(k - 1, FDDL_ARC(k, nodeP, j)).flags & SHARED)
+		if (FDDL_NODE(k - 1, FDDL_ARC(k, nodeP, j)).flags & FLAG_SHARED)
 		    printf("%d ", j);
 	    }
 	}
@@ -1091,8 +1066,8 @@ void Forest::PrintAddy(MDDHandle root, level k)
 	    Node *child;
 
 	    child = &FDDL_NODE(k1, i);
-	    if (child->flags & SHARED)
-		child->flags -= SHARED;
+	    if (child->flags & FLAG_SHARED)
+		child->flags = (flag)(child->flags - FLAG_SHARED);
 	}
     }
 
@@ -1103,7 +1078,7 @@ void Forest::PrintAddy(MDDHandle root, level k)
     for (int i = 0; i < 4; i++)
 	vals[i] = (-1);
     for (int i = 0; i < last[k]; i++) {
-	if (FDDL_NODE(k, i).flags & SHARED)
+	if (FDDL_NODE(k, i).flags & FLAG_SHARED)
 	    PrintAddy(k, i, vals, 0);
     }
     delete[]vals;
@@ -1172,7 +1147,7 @@ void Forest::PrintAddy(level k, node_idx p, int *vals, int depth)
 
     Node *nodeP = &FDDL_NODE(k, p);
 
-    if (!(nodeP->flags & SHARED))
+    if (!(nodeP->flags & FLAG_SHARED))
 	return;
 
     float numResults;
@@ -1214,7 +1189,7 @@ void Forest::PrintAddy(level k, node_idx p, int *vals, int depth)
 
 int Forest::InternalPrintVals(level k, node_idx p)
 {
-    int flag;
+    int result;
 
     if (p == 0) {
 	return 0;
@@ -1225,22 +1200,22 @@ int Forest::InternalPrintVals(level k, node_idx p)
 	}
 	return 0;
     }
-    flag = PrintCache[k]->hit(p);
-    if (flag >= 0) {
-	return flag;
+    result = PrintCache[k]->hit(p);
+    if (result >= 0) {
+	return result;
     }
 
     Node *nodeP = &FDDL_NODE(k, p);
 
-    flag = 0;
+    result = 0;
     for (int i = 0; i < nodeP->size; i++) {
 	if (InternalPrintVals(k - 1, FDDL_ARC(k, nodeP, i)) == 1) {
-	    flag = 1;
+	    result = 1;
 	    //break;
 	}
     }
-    if (flag == 1) {
-	nodeP->flags += SHARED;
+    if (result == 1) {
+	nodeP->flags = (flag)(nodeP->flags | FLAG_SHARED);
 	PrintCache[k]->add(1, p);
 	return 1;
     }
@@ -1364,7 +1339,7 @@ void Forest::PrintStates(level k, node_idx p, int *stateArray)
 	counter++;
     } else {
 	nodeP = &FDDL_NODE(k, p);
-	if (nodeP->flags & SPARSE) {
+	if (nodeP->flags & FLAG_SPARSE) {
 	    for (i = 0; i < nodeP->size; i++) {
 		stateArray[k] = FULL_ARC(k, nodeP, i * 2);
 		PrintStates(k - 1,
@@ -1411,7 +1386,7 @@ for (node_idx i=0; i< last[K];i++)
 	    Node *nodeQ;
 
 	    nodeQ = &FDDL_NODE(k, q);
-	    if (!(nodeQ->flags & SHARED)) {
+	    if (!(nodeQ->flags & FLAG_SHARED)) {
 		DeleteDownstream(k, q);
 	    }
 	}
@@ -1431,7 +1406,7 @@ void Forest::PruneMDD(node_idx p)
 	    Node *nodeQ;
 
 	    nodeQ = &FDDL_NODE(k, q);
-	    if (!(nodeQ->flags & SHARED)) {
+	    if (!(nodeQ->flags & FLAG_SHARED)) {
 		DeleteDownstream(k, q);
 	    }
 	}
@@ -1441,7 +1416,7 @@ void Forest::PruneMDD(node_idx p)
     InternalPruneMDD(K, p, 1);
 }
 
-void Forest::InternalPruneMDD(level k, node_idx p, int flag)
+void Forest::InternalPruneMDD(level k, node_idx p, int shared_flag)
 {
     Node *nodeP;
     int result;
@@ -1452,16 +1427,16 @@ void Forest::InternalPruneMDD(level k, node_idx p, int flag)
     result = PruneCache[k]->hit(p);
     if (result == 1)
 	return;
-    if (flag == 0) {
-	if (nodeP->flags & SHARED)
-	    nodeP->flags -= SHARED;
+    if (shared_flag == 0) {
+	if (nodeP->flags & FLAG_SHARED)
+	    nodeP->flags = (flag)(nodeP->flags - FLAG_SHARED);
     } else {
-	if (nodeP->flags & SHARED)
+	if (nodeP->flags & FLAG_SHARED)
 	    return;
-	nodeP->flags = nodeP->flags + SHARED;
+	nodeP->flags = (flag)(nodeP->flags | FLAG_SHARED);
     }
     for (int i = 0; i < nodeP->size; i++) {
-	InternalPruneMDD(k - 1, FDDL_ARC(k, nodeP, i), flag);
+	InternalPruneMDD(k - 1, FDDL_ARC(k, nodeP, i), shared_flag);
     }
     PruneCache[k]->add(1, p);
 }
@@ -1478,11 +1453,11 @@ void Forest::PrintMDD()
 	    Node *nodeI;
 
 	    nodeI = &FDDL_NODE(k, i);
-	    if (!(nodeI->flags & DELETED)) {
+	    if (!(nodeI->flags & FLAG_DELETED)) {
 		printf("%d:%c(%d,%d)%c ", i,
-		       nodeI->flags & SHARED ? '!' : ' ',
+		       nodeI->flags & FLAG_SHARED ? '!' : ' ',
 		       nodeI->down,
-		       nodeI->size, nodeI->flags & SPARSE ? 'S' : ' ');
+		       nodeI->size, nodeI->flags & FLAG_SPARSE ? 'S' : ' ');
 	    } else {
 		printf("%d[D] ", i);
 	    }
@@ -1514,10 +1489,10 @@ void Forest::PrintMDD(int top, int bottom)
     for (level k = top; k >= bottom; k--) {
 	printf("Level %d: ", k);
 	for (int i = 1; i < last[k]; i++)
-	    if (!(FDDL_NODE(k, i).flags & DELETED))
+	    if (!(FDDL_NODE(k, i).flags & FLAG_DELETED))
 		printf("%d:(%d,%d)%c ", i, FDDL_NODE(k, i).down,
 		       FDDL_NODE(k, i).size, FDDL_NODE(k,
-						       i).flags & SPARSE ?
+						       i).flags & FLAG_SPARSE ?
 		       'S' : ' ');
 	printf("\t: %d\n", tail[k]);
 	for (int i = 0; i < tail[k]; i++)
@@ -1583,7 +1558,7 @@ void Forest::LoadMDD(char *filename)
 	for (node_idx i = 0; i < last[k]; i++) {
 	    Node *nodeI = &FDDL_NODE(k, i);
 
-	    fscanf(inFile, "%c %d %d %d ", &nodeI->flags,
+	    fscanf(inFile, "%d %d %d %d ", &nodeI->flags,
 		&nodeI->in, &nodeI->size, &nodeI->down);
 	}
 	fscanf(inFile, "\n");

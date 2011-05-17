@@ -713,7 +713,7 @@ node_idx Forest::InternalMin(level k, node_idx p, node_idx q)
 
     result = MinCache[k]->hit(p, q);
     if (result >= 0) {
-	if (!(FDDL_NODE(k, result).flags & DELETED))
+	if (!(FDDL_NODE(k, result).flags & FLAG_DELETED))
 	    return result;
 	return CheckIn(k, result);
     }
@@ -828,7 +828,7 @@ node_idx Forest::InternalComplement(level k, node_idx p)
 
     result = ComplementCache[k]->hit(p);
     if (result >= 0) {
-	if (!(FDDL_NODE(k, result).flags & DELETED))
+	if (!(FDDL_NODE(k, result).flags & FLAG_DELETED))
 	    return result;
 	return CheckIn(k, result);
     }
@@ -910,7 +910,7 @@ node_idx Forest::InternalBComplement(level k, node_idx p)
 
     result = BComplementCache[k]->hit(p);
     if (result >= 0) {
-	if (!(FDDL_NODE(k, result).flags & DELETED))
+	if (!(FDDL_NODE(k, result).flags & FLAG_DELETED))
 	    return result;
 	return CheckIn(k, result);
     }
