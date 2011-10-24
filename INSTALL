@@ -13,7 +13,7 @@ Step 5. Become the superuser.
 Step 6. Run "make install".
 
 By default, the "FDDL" library files will be installed to /usr/local/lib.
-Make sure your environment settings (i.e. your PATH variable reflect these 
+Make sure your environment settings (i.e. your PATH variable) reflect these 
 locations.
 
 To change where the files are installed, this can be 
